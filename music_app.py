@@ -51,6 +51,13 @@ class MusicApp:
         
         # Generate colors for all chords
         self.chord_color_map = {
+            # Single notes - bright distinctive colors
+            'C3n': '#00FFFF', 'D3n': '#00E5FF', 'E3n': '#00D4FF', 'F3n': '#00C4FF', 
+            'G3n': '#00B3FF', 'A3n': '#00A2FF', 'B3n': '#0091FF',
+            'C4n': '#00DDFF', 'D4n': '#00CCFF', 'E4n': '#00BBFF', 'F4n': '#00AAFF', 
+            'G4n': '#0099FF', 'A4n': '#0088FF', 'B4n': '#0077FF',
+            'C5n': '#00BBFF', 'D5n': '#00AAFF', 'E5n': '#0099FF', 'F5n': '#0088FF', 
+            'G5n': '#0077FF', 'A5n': '#0066FF', 'B5n': '#0055FF',
             # Major chords - warm colors
             'C': '#FF6B6B', 'D': '#FF8C42', 'E': '#FFA726', 'F': '#FFA07A', 
             'G': '#98D8C8', 'A': '#F7DC6F', 'B': '#FFD93D',
@@ -181,6 +188,9 @@ class MusicApp:
         
         # Comprehensive chord and note list
         chords = [
+            # Single notes for melody
+            'C4n', 'D4n', 'E4n', 'F4n', 'G4n', 'A4n', 'B4n',
+            'C5n', 'D5n', 'E5n', 'F5n', 'G5n', 'A5n', 'B5n',
             # Major chords
             'C', 'D', 'E', 'F', 'G', 'A', 'B', 'Db', 'Eb', 'Gb', 'Ab', 'Bb',
             # Minor chords  
@@ -479,54 +489,68 @@ class MusicApp:
     def _play_sequence(self):
         """Play the chord sequence with multi-track support"""
         try:
-            # Sort blocks by position, then by track
-            sorted_blocks = sorted(self.chord_blocks, key=lambda b: (b.position, b.track))
-            
-            if not sorted_blocks:
+            if not self.chord_blocks:
                 return
             
             beat_duration = 60.0 / self.bpm  # Duration of one beat in seconds
             
             # Loop if repeat mode is on
             while True:
-                # Track current position in beats
-                current_position = 0
-                i = 0
+                # Sort all blocks by their start time
+                sorted_blocks = sorted(self.chord_blocks, key=lambda b: b.position)
                 
-                while i < len(sorted_blocks):
+                # Find the total duration
+                if sorted_blocks:
+                    max_end_time = max(block.position + block.duration for block in sorted_blocks)
+                else:
+                    break
+                
+                # Pre-generate all sounds and their start times
+                scheduled_sounds = []
+                for block in sorted_blocks:
+                    start_time_ms = int(block.position * beat_duration * 1000)
+                    sound = self.chord_generator.generate_chord(
+                        block.chord_name, 
+                        duration=block.duration * beat_duration
+                    )
+                    scheduled_sounds.append((start_time_ms, sound))
+                
+                # Sort by start time
+                scheduled_sounds.sort(key=lambda x: x[0])
+                
+                # Play all sounds with precise timing
+                start_ticks = pygame.time.get_ticks()
+                sound_index = 0
+                
+                while sound_index < len(scheduled_sounds):
                     if not self.is_playing:
                         return
                     
-                    # Get all blocks at the same position (different tracks)
-                    blocks_at_position = []
-                    current_block_position = sorted_blocks[i].position
+                    current_ticks = pygame.time.get_ticks()
+                    elapsed_ms = current_ticks - start_ticks
                     
-                    while i < len(sorted_blocks) and sorted_blocks[i].position == current_block_position:
-                        blocks_at_position.append(sorted_blocks[i])
-                        i += 1
+                    # Play all sounds that should start now
+                    while sound_index < len(scheduled_sounds):
+                        scheduled_start_ms, sound = scheduled_sounds[sound_index]
+                        
+                        # If this sound's start time has arrived (with 50ms tolerance)
+                        if elapsed_ms >= scheduled_start_ms - 50:
+                            channel = pygame.mixer.find_channel()
+                            if channel:
+                                channel.play(sound)
+                            sound_index += 1
+                        else:
+                            break
                     
-                    # Wait for the gap before these chords
-                    if current_block_position > current_position:
-                        gap = current_block_position - current_position
-                        gap_time = int(gap * beat_duration * 1000)
-                        pygame.time.wait(gap_time)
-                    
-                    # Play all chords at this position simultaneously
-                    max_duration = 0
-                    for block in blocks_at_position:
-                        sound = self.chord_generator.generate_chord(block.chord_name, 
-                                                                   duration=block.duration * beat_duration)
-                        channel = pygame.mixer.find_channel()
-                        if channel:
-                            channel.play(sound)
-                        max_duration = max(max_duration, block.duration)
-                    
-                    # Wait for the longest block duration
-                    wait_time = int(max_duration * beat_duration * 1000)
-                    pygame.time.wait(wait_time)
-                    
-                    # Update current position
-                    current_position = current_block_position + max_duration
+                    # Small sleep to prevent CPU spinning
+                    pygame.time.wait(10)
+                
+                # Wait for all sounds to finish
+                final_duration_ms = int(max_end_time * beat_duration * 1000)
+                while pygame.time.get_ticks() - start_ticks < final_duration_ms:
+                    if not self.is_playing:
+                        return
+                    pygame.time.wait(50)
                 
                 # If not in repeat mode, break after one playthrough
                 if not self.repeat_mode:
@@ -719,31 +743,56 @@ class MusicApp:
     
     def load_default_song(self):
         """Load Happy Birthday as default song"""
-        # Happy Birthday melody and chords
+        # Happy Birthday melody in C major (actual notes)
+        # Phrase 1: "Happy birthday to you"
+        # Phrase 2: "Happy birthday to you"
+        # Phrase 3: "Happy birthday dear [name]"
+        # Phrase 4: "Happy birthday to you"
+        
+        self.bpm = 100  # Slower tempo for Happy Birthday
+        self.bpm_var.set(str(self.bpm))
+        
         default_blocks = [
-            # Melody track (Track 0)
-            ChordBlock('G', 0, 0.75, 0),
-            ChordBlock('G', 1, 0.25, 0),
-            ChordBlock('A', 1.5, 1, 0),
-            ChordBlock('G', 2.5, 1, 0),
-            ChordBlock('C', 3.5, 1, 0),
-            ChordBlock('B', 4.5, 2, 0),
+            # Melody track (Track 0) - Actual Happy Birthday melody
+            # "Happy birthday to you" (Phrase 1)
+            ChordBlock('G4n', 0, 0.75, 0),      # Hap-
+            ChordBlock('G4n', 0.75, 0.25, 0),   # py
+            ChordBlock('A4n', 1, 1, 0),          # birth-
+            ChordBlock('G4n', 2, 1, 0),          # day
+            ChordBlock('C5n', 3, 1, 0),          # to
+            ChordBlock('B4n', 4, 2, 0),          # you
             
-            # Repeat
-            ChordBlock('G', 7, 0.75, 0),
-            ChordBlock('G', 8, 0.25, 0),
-            ChordBlock('A', 8.5, 1, 0),
-            ChordBlock('G', 9.5, 1, 0),
-            ChordBlock('D', 10.5, 1, 0),
-            ChordBlock('C', 11.5, 2, 0),
+            # "Happy birthday to you" (Phrase 2)
+            ChordBlock('G4n', 6, 0.75, 0),      # Hap-
+            ChordBlock('G4n', 6.75, 0.25, 0),   # py
+            ChordBlock('A4n', 7, 1, 0),          # birth-
+            ChordBlock('G4n', 8, 1, 0),          # day
+            ChordBlock('D5n', 9, 1, 0),          # to
+            ChordBlock('C5n', 10, 2, 0),         # you
             
-            # Harmony track (Track 1) - Bass chords
-            ChordBlock('C', 0, 2, 1),
-            ChordBlock('G', 2, 2, 1),
-            ChordBlock('C', 4, 3, 1),
-            ChordBlock('C', 7, 2, 1),
-            ChordBlock('G', 9, 2, 1),
-            ChordBlock('C', 11, 2, 1),
+            # "Happy birthday dear [name]" (Phrase 3)
+            ChordBlock('G4n', 12, 0.75, 0),     # Hap-
+            ChordBlock('G4n', 12.75, 0.25, 0),  # py
+            ChordBlock('G5n', 13, 1, 0),         # birth-
+            ChordBlock('E5n', 14, 1, 0),         # day
+            ChordBlock('C5n', 15, 1, 0),         # dear
+            ChordBlock('B4n', 16, 1, 0),         # [name]
+            ChordBlock('A4n', 17, 2, 0),         # (name)
+            
+            # "Happy birthday to you" (Phrase 4)
+            ChordBlock('F5n', 19, 0.75, 0),     # Hap-
+            ChordBlock('F5n', 19.75, 0.25, 0),  # py
+            ChordBlock('E5n', 20, 1, 0),         # birth-
+            ChordBlock('C5n', 21, 1, 0),         # day
+            ChordBlock('D5n', 22, 1, 0),         # to
+            ChordBlock('C5n', 23, 2, 0),         # you
+            
+            # Harmony track (Track 1) - Bass/chord accompaniment
+            ChordBlock('C', 0, 6, 1),      # C chord for phrase 1
+            ChordBlock('C', 6, 6, 1),      # C chord for phrase 2
+            ChordBlock('C', 12, 7, 1),     # C chord for phrase 3
+            ChordBlock('F', 19, 3, 1),     # F chord
+            ChordBlock('C', 22, 3, 1),     # C chord for ending
         ]
         
         for block in default_blocks:

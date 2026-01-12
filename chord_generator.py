@@ -71,6 +71,11 @@ class ChordGenerator:
             'Fsus2': ['F4', 'G4', 'C5'], 'Fsus4': ['F4', 'Bb4', 'C5'],
             'Gsus2': ['G4', 'A4', 'D5'], 'Gsus4': ['G4', 'C5', 'D5'],
             'Asus2': ['A4', 'B4', 'E5'], 'Asus4': ['A4', 'D5', 'E5'],
+            
+            # Single Notes (for melodies)
+            'C3n': ['C3'], 'D3n': ['D3'], 'E3n': ['E3'], 'F3n': ['F3'], 'G3n': ['G3'], 'A3n': ['A3'], 'B3n': ['B3'],
+            'C4n': ['C4'], 'D4n': ['D4'], 'E4n': ['E4'], 'F4n': ['F4'], 'G4n': ['G4'], 'A4n': ['A4'], 'B4n': ['B4'],
+            'C5n': ['C5'], 'D5n': ['D5'], 'E5n': ['E5'], 'F5n': ['F5'], 'G5n': ['G5'], 'A5n': ['A5'], 'B5n': ['B5'],
         }
     
     def generate_tone(self, frequency, duration=1.0, volume=0.3):
