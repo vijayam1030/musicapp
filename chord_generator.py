@@ -38,37 +38,52 @@ class ChordGenerator:
         }
     
     def generate_tone(self, frequency, duration=1.0, volume=0.3):
-        """Generate a single tone using sine wave"""
+        """Generate a single tone with harmonics for richer sound"""
         num_samples = int(self.sample_rate * duration)
         t = np.linspace(0, duration, num_samples, False)
         
-        # Generate sine wave
-        wave = np.sin(2 * np.pi * frequency * t)
+        # Generate fundamental frequency with harmonics for piano-like sound
+        wave = np.sin(2 * np.pi * frequency * t)  # Fundamental
+        wave += 0.5 * np.sin(2 * np.pi * frequency * 2 * t)  # 2nd harmonic
+        wave += 0.3 * np.sin(2 * np.pi * frequency * 3 * t)  # 3rd harmonic
+        wave += 0.15 * np.sin(2 * np.pi * frequency * 4 * t)  # 4th harmonic
+        wave += 0.08 * np.sin(2 * np.pi * frequency * 5 * t)  # 5th harmonic
+        
+        # Normalize
+        wave = wave / 2.03
         
         # Apply envelope (ADSR - simplified)
         envelope = self.create_envelope(num_samples)
         wave = wave * envelope * volume
         
+        # Add subtle vibrato for warmth
+        vibrato_freq = 5.0  # 5 Hz vibrato
+        vibrato_depth = 0.003  # Very subtle
+        vibrato = 1 + vibrato_depth * np.sin(2 * np.pi * vibrato_freq * t)
+        wave = wave * vibrato
+        
         # Convert to 16-bit integers
         wave = (wave * 32767).astype(np.int16)
         
-        # Make stereo
-        stereo_wave = np.column_stack((wave, wave))
+        # Make stereo with slight stereo widening
+        left = wave
+        right = wave
+        stereo_wave = np.column_stack((left, right))
         
         return stereo_wave
     
     def create_envelope(self, num_samples):
         """Create an ADSR envelope for more natural sound"""
-        attack = int(num_samples * 0.05)  # 5% attack
-        decay = int(num_samples * 0.1)    # 10% decay
-        sustain_level = 0.7
-        release = int(num_samples * 0.3)  # 30% release
+        attack = int(num_samples * 0.01)  # 1% quick attack
+        decay = int(num_samples * 0.15)   # 15% decay
+        sustain_level = 0.6
+        release = int(num_samples * 0.4)  # 40% smooth release
         
         envelope = np.ones(num_samples)
         
-        # Attack
+        # Attack - exponential curve for natural sound
         if attack > 0:
-            envelope[:attack] = np.linspace(0, 1, attack)
+            envelope[:attack] = np.power(np.linspace(0, 1, attack), 0.5)
         
         # Decay
         if decay > 0:
@@ -79,9 +94,9 @@ class ChordGenerator:
         if sustain_end > attack + decay:
             envelope[attack+decay:sustain_end] = sustain_level
         
-        # Release
+        # Release - exponential curve
         if release > 0:
-            envelope[sustain_end:] = np.linspace(sustain_level, 0, release)
+            envelope[sustain_end:] = sustain_level * np.power(np.linspace(1, 0, release), 2)
         
         return envelope
     
@@ -98,16 +113,20 @@ class ChordGenerator:
         for note in notes:
             if note in self.note_frequencies:
                 freq = self.note_frequencies[note]
-                wave = self.generate_tone(freq, duration, volume=0.2)
+                wave = self.generate_tone(freq, duration, volume=0.25)
                 chord_waves.append(wave)
         
         # Mix all notes together
         if chord_waves:
             mixed = np.sum(chord_waves, axis=0)
-            # Normalize to prevent clipping
+            
+            # Add simple reverb effect
+            mixed = self.add_reverb(mixed)
+            
+            # Normalize to prevent clipping with headroom
             max_val = np.max(np.abs(mixed))
-            if max_val > 32767:
-                mixed = mixed * (32767 / max_val)
+            if max_val > 0:
+                mixed = mixed * (28000 / max_val)  # Leave headroom
             mixed = mixed.astype(np.int16)
         else:
             # Fallback to silence
@@ -116,6 +135,24 @@ class ChordGenerator:
         # Convert to pygame Sound
         sound = pygame.sndarray.make_sound(mixed)
         return sound
+    
+    def add_reverb(self, audio, wet=0.15):
+        """Add simple reverb effect for depth"""
+        delay_samples = int(0.05 * self.sample_rate)  # 50ms delay
+        reverb = np.zeros_like(audio, dtype=np.float32)
+        reverb[:] = audio
+        
+        # Add delayed copies with decay
+        if len(audio) > delay_samples:
+            reverb[delay_samples:] += audio[:-delay_samples] * 0.3
+        
+        delay2 = int(0.08 * self.sample_rate)  # 80ms delay
+        if len(audio) > delay2:
+            reverb[delay2:] += audio[:-delay2] * 0.15
+        
+        # Mix dry and wet signals
+        output = audio * (1 - wet) + reverb * wet
+        return output
     
     def generate_melody_note(self, note_name, duration=0.5):
         """Generate a single melody note"""
