@@ -47,14 +47,17 @@ class ChordGenerator:
             # Seventh Chords
             'C7': ['C4', 'E4', 'G4', 'Bb4'], 'D7': ['D4', 'F#4', 'A4', 'C5'], 'E7': ['E4', 'G#4', 'B4', 'D5'],
             'F7': ['F4', 'A4', 'C5', 'Eb5'], 'G7': ['G4', 'B4', 'D5', 'F5'], 'A7': ['A4', 'C#5', 'E5', 'G5'], 'B7': ['B4', 'D#5', 'F#5', 'A5'],
+            'Bb7': ['Bb4', 'D5', 'F5', 'Ab5'], 'Eb7': ['Eb4', 'G4', 'Bb4', 'Db5'], 'Ab7': ['Ab4', 'C5', 'Eb5', 'Gb5'],
             
             # Major Seventh Chords
             'Cmaj7': ['C4', 'E4', 'G4', 'B4'], 'Dmaj7': ['D4', 'F#4', 'A4', 'C#5'], 'Emaj7': ['E4', 'G#4', 'B4', 'D#5'],
             'Fmaj7': ['F4', 'A4', 'C5', 'E5'], 'Gmaj7': ['G4', 'B4', 'D5', 'F#5'], 'Amaj7': ['A4', 'C#5', 'E5', 'G#5'],
+            'Bmaj7': ['B4', 'D#5', 'F#5', 'A#5'],
             
             # Minor Seventh Chords
             'Cm7': ['C4', 'Eb4', 'G4', 'Bb4'], 'Dm7': ['D4', 'F4', 'A4', 'C5'], 'Em7': ['E4', 'G4', 'B4', 'D5'],
             'Fm7': ['F4', 'Ab4', 'C5', 'Eb5'], 'Gm7': ['G4', 'Bb4', 'D5', 'F5'], 'Am7': ['A4', 'C5', 'E5', 'G5'],
+            'Bm7': ['B4', 'D5', 'F#5', 'A5'],
             
             # Diminished Chords
             'Cdim': ['C4', 'Eb4', 'Gb4'], 'Ddim': ['D4', 'F4', 'Ab4'], 'Edim': ['E4', 'G4', 'Bb4'],
@@ -71,6 +74,34 @@ class ChordGenerator:
             'Fsus2': ['F4', 'G4', 'C5'], 'Fsus4': ['F4', 'Bb4', 'C5'],
             'Gsus2': ['G4', 'A4', 'D5'], 'Gsus4': ['G4', 'C5', 'D5'],
             'Asus2': ['A4', 'B4', 'E5'], 'Asus4': ['A4', 'D5', 'E5'],
+            
+            # 9th Chords (dominant 9th)
+            'C9': ['C4', 'E4', 'G4', 'Bb4', 'D5'], 'D9': ['D4', 'F#4', 'A4', 'C5', 'E5'], 
+            'E9': ['E4', 'G#4', 'B4', 'D5', 'F#5'], 'F9': ['F4', 'A4', 'C5', 'Eb5', 'G5'], 
+            'G9': ['G4', 'B4', 'D5', 'F5', 'A5'], 'A9': ['A4', 'C#5', 'E5', 'G5', 'B5'],
+            
+            # Minor 9th Chords
+            'Cm9': ['C4', 'Eb4', 'G4', 'Bb4', 'D5'], 'Dm9': ['D4', 'F4', 'A4', 'C5', 'E5'],
+            'Em9': ['E4', 'G4', 'B4', 'D5', 'F#5'], 'Am9': ['A4', 'C5', 'E5', 'G5', 'B5'],
+            
+            # 6th Chords
+            'C6': ['C4', 'E4', 'G4', 'A4'], 'D6': ['D4', 'F#4', 'A4', 'B4'], 
+            'E6': ['E4', 'G#4', 'B4', 'C#5'], 'F6': ['F4', 'A4', 'C5', 'D5'],
+            'G6': ['G4', 'B4', 'D5', 'E5'], 'A6': ['A4', 'C#5', 'E5', 'F#5'],
+            
+            # Minor 6th Chords
+            'Cm6': ['C4', 'Eb4', 'G4', 'A4'], 'Dm6': ['D4', 'F4', 'A4', 'B4'],
+            'Em6': ['E4', 'G4', 'B4', 'C#5'], 'Am6': ['A4', 'C5', 'E5', 'F#5'],
+            
+            # Add9 Chords (major triad + 9th)
+            'Cadd9': ['C4', 'E4', 'G4', 'D5'], 'Dadd9': ['D4', 'F#4', 'A4', 'E5'],
+            'Eadd9': ['E4', 'G#4', 'B4', 'F#5'], 'Fadd9': ['F4', 'A4', 'C5', 'G5'],
+            'Gadd9': ['G4', 'B4', 'D5', 'A5'], 'Aadd9': ['A4', 'C#5', 'E5', 'B5'],
+            
+            # Power Chords (root + 5th, common in guitar/rock)
+            'C5': ['C3', 'G3', 'C4'], 'D5': ['D3', 'A3', 'D4'], 'E5': ['E3', 'B3', 'E4'],
+            'F5': ['F3', 'C4', 'F4'], 'G5': ['G3', 'D4', 'G4'], 'A5': ['A3', 'E4', 'A4'], 
+            'B5': ['B3', 'F#4', 'B4'],
             
             # Single Notes (for melodies)
             'C3n': ['C3'], 'D3n': ['D3'], 'E3n': ['E3'], 'F3n': ['F3'], 'G3n': ['G3'], 'A3n': ['A3'], 'B3n': ['B3'],
@@ -150,6 +181,83 @@ class ChordGenerator:
             wave += 0.2 * np.sin(2 * np.pi * frequency * 4 * t)
             wave = wave / 2.4
             
+        elif instrument == 'Flute':
+            # Flute sound - soft, breathy with fewer harmonics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.15 * np.sin(2 * np.pi * frequency * 3 * t)
+            # Add subtle vibrato
+            vibrato = 1 + 0.008 * np.sin(2 * np.pi * 5.5 * t)
+            wave = wave * vibrato
+            # Add breath noise (subtle)
+            noise = np.random.normal(0, 0.02, len(t))
+            wave = wave + noise
+            wave = wave / 1.5
+            
+        elif instrument == 'Saxophone':
+            # Saxophone - rich, reedy sound with strong harmonics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.4 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave += 0.25 * np.sin(2 * np.pi * frequency * 5 * t)
+            # Vibrato for expressiveness
+            vibrato = 1 + 0.012 * np.sin(2 * np.pi * 6 * t)
+            wave = wave * vibrato
+            wave = wave / 2.8
+            
+        elif instrument == 'Trumpet':
+            # Trumpet - bright, brassy with strong upper harmonics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.6 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.4 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave += 0.35 * np.sin(2 * np.pi * frequency * 5 * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 6 * t)
+            # Attack envelope for brass punch
+            attack_env = np.minimum(1.0, t * 50)
+            wave = wave * attack_env
+            wave = wave / 2.9
+            
+        elif instrument == 'Trombone':
+            # Trombone - warm, mellow brass
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave += 0.2 * np.sin(2 * np.pi * frequency * 5 * t)
+            # Slight slide effect
+            slide = 1 + 0.003 * np.exp(-8 * t / duration) * np.sin(2 * np.pi * 20 * t)
+            wave = wave * slide
+            wave = wave / 2.6
+            
+        elif instrument == 'Violin':
+            # Violin - very rich harmonics with vibrato
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.6 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.45 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave += 0.2 * np.sin(2 * np.pi * frequency * 5 * t)
+            wave += 0.15 * np.sin(2 * np.pi * frequency * 6 * t)
+            wave += 0.1 * np.sin(2 * np.pi * frequency * 7 * t)
+            # Strong vibrato
+            vibrato = 1 + 0.01 * np.sin(2 * np.pi * 6 * t)
+            wave = wave * vibrato
+            wave = wave / 2.7
+            
+        elif instrument == 'Cello':
+            # Cello - deep, rich, warm
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave += 0.2 * np.sin(2 * np.pi * frequency * 5 * t)
+            wave += 0.15 * np.sin(2 * np.pi * frequency * 6 * t)
+            # Subtle vibrato
+            vibrato = 1 + 0.007 * np.sin(2 * np.pi * 5 * t)
+            wave = wave * vibrato
+            wave = wave / 2.8
+            
         else:
             # Default to piano
             wave = np.sin(2 * np.pi * frequency * t)
@@ -205,6 +313,36 @@ class ChordGenerator:
             decay = int(num_samples * 0.1)
             sustain_level = 0.7
             release = int(num_samples * 0.4)
+        elif instrument == 'Flute':
+            attack = int(num_samples * 0.03)  # Soft attack
+            decay = int(num_samples * 0.08)
+            sustain_level = 0.7
+            release = int(num_samples * 0.25)
+        elif instrument == 'Saxophone':
+            attack = int(num_samples * 0.015)  # Quick attack
+            decay = int(num_samples * 0.1)
+            sustain_level = 0.75
+            release = int(num_samples * 0.35)
+        elif instrument == 'Trumpet':
+            attack = int(num_samples * 0.008)  # Sharp attack
+            decay = int(num_samples * 0.12)
+            sustain_level = 0.8
+            release = int(num_samples * 0.3)
+        elif instrument == 'Trombone':
+            attack = int(num_samples * 0.012)
+            decay = int(num_samples * 0.1)
+            sustain_level = 0.75
+            release = int(num_samples * 0.35)
+        elif instrument == 'Violin':
+            attack = int(num_samples * 0.06)  # Bow attack
+            decay = int(num_samples * 0.08)
+            sustain_level = 0.85
+            release = int(num_samples * 0.25)
+        elif instrument == 'Cello':
+            attack = int(num_samples * 0.07)  # Slower bow attack
+            decay = int(num_samples * 0.1)
+            sustain_level = 0.8
+            release = int(num_samples * 0.3)
         else:
             attack = int(num_samples * 0.01)
             decay = int(num_samples * 0.15)

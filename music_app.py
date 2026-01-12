@@ -69,12 +69,13 @@ class MusicApp:
             # 7th chords - purple/pink
             'C7': '#E74C3C', 'D7': '#EC7063', 'E7': '#F1948A', 'F7': '#F5B7B1',
             'G7': '#D98880', 'A7': '#CD6155', 'B7': '#C0392B',
+            'Bb7': '#E74C3C', 'Eb7': '#EC7063', 'Ab7': '#F1948A',
             # Major 7th - light purple
             'Cmaj7': '#BB8FCE', 'Dmaj7': '#C39BD3', 'Emaj7': '#D7BDE2', 
-            'Fmaj7': '#E8DAEF', 'Gmaj7': '#AF7AC5', 'Amaj7': '#A569BD',
+            'Fmaj7': '#E8DAEF', 'Gmaj7': '#AF7AC5', 'Amaj7': '#A569BD', 'Bmaj7': '#9B59B6',
             # Minor 7th - teal
             'Cm7': '#17A589', 'Dm7': '#1ABC9C', 'Em7': '#48C9B0', 
-            'Fm7': '#76D7C4', 'Gm7': '#45B39D', 'Am7': '#138D75',
+            'Fm7': '#76D7C4', 'Gm7': '#45B39D', 'Am7': '#138D75', 'Bm7': '#0E6655',
             # Diminished - gray/brown
             'Cdim': '#7F8C8D', 'Ddim': '#95A5A6', 'Edim': '#BDC3C7', 
             'Fdim': '#AAB7B8', 'Gdim': '#99A3A4', 'Adim': '#85929E', 'Bdim': '#717D7E',
@@ -85,6 +86,22 @@ class MusicApp:
             'Csus2': '#F4D03F', 'Csus4': '#F7DC6F', 'Dsus2': '#F9E79F', 'Dsus4': '#FAD7A0',
             'Esus2': '#F8B739', 'Esus4': '#F5B041', 'Fsus2': '#EB984E', 'Fsus4': '#E59866',
             'Gsus2': '#DC7633', 'Gsus4': '#D68910', 'Asus2': '#CA6F1E', 'Asus4': '#BA4A00',
+            # 9th chords - bright pink
+            'C9': '#FF69B4', 'D9': '#FF1493', 'E9': '#DB7093', 'F9': '#C71585',
+            'G9': '#D02090', 'A9': '#FF00FF',
+            # Minor 9th - deep purple
+            'Cm9': '#8B008B', 'Dm9': '#9400D3', 'Em9': '#9932CC', 'Am9': '#BA55D3',
+            # 6th chords - soft yellow
+            'C6': '#FFE4B5', 'D6': '#FFDAB9', 'E6': '#FFEFD5', 'F6': '#FFEBCD',
+            'G6': '#FFEAA7', 'A6': '#FDCB6E',
+            # Minor 6th - pale blue
+            'Cm6': '#87CEEB', 'Dm6': '#87CEFA', 'Em6': '#00BFFF', 'Am6': '#1E90FF',
+            # Add9 chords - peach/coral
+            'Cadd9': '#FFDAB9', 'Dadd9': '#FFB347', 'Eadd9': '#FF9966', 
+            'Fadd9': '#FF8C69', 'Gadd9': '#FFA07A', 'Aadd9': '#FF7F50',
+            # Power chords - bold red/black
+            'C5': '#8B0000', 'D5': '#A52A2A', 'E5': '#B22222', 'F5': '#DC143C',
+            'G5': '#CD5C5C', 'A5': '#E9967A', 'B5': '#FA8072',
         }
         
         self.setup_ui()
@@ -164,8 +181,9 @@ class MusicApp:
                 fg='white', font=('Arial', 12)).pack(side=tk.LEFT, padx=(30, 5))
         self.instrument_var = tk.StringVar(value='Piano')
         instrument_combo = ttk.Combobox(control_frame, textvariable=self.instrument_var,
-                                values=['Piano', 'Guitar', 'Strings', 'Organ', 'Synth', 'Bass'],
-                                width=10, font=('Arial', 12), state='readonly')
+                                values=['Piano', 'Guitar', 'Strings', 'Organ', 'Synth', 'Bass',
+                                       'Flute', 'Saxophone', 'Trumpet', 'Trombone', 'Violin', 'Cello'],
+                                width=12, font=('Arial', 12), state='readonly')
         instrument_combo.pack(side=tk.LEFT, padx=5)
         instrument_combo.bind('<<ComboboxSelected>>', self.update_instrument)
         
@@ -196,32 +214,35 @@ class MusicApp:
         palette_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         palette_canvas.create_window((0, 0), window=chord_container, anchor='nw')
         
-        # Comprehensive chord and note list
-        chords = [
-            # Single notes for melody
-            'C4n', 'D4n', 'E4n', 'F4n', 'G4n', 'A4n', 'B4n',
-            'C5n', 'D5n', 'E5n', 'F5n', 'G5n', 'A5n', 'B5n',
-            # Major chords
-            'C', 'D', 'E', 'F', 'G', 'A', 'B', 'Db', 'Eb', 'Gb', 'Ab', 'Bb',
-            # Minor chords  
-            'Cm', 'Dm', 'Em', 'Fm', 'Gm', 'Am', 'Bm', 'C#m', 'Ebm', 'F#m', 'Abm', 'Bbm',
-            # 7th chords
-            'C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'B7',
-            # Major 7th
-            'Cmaj7', 'Dmaj7', 'Emaj7', 'Fmaj7', 'Gmaj7', 'Amaj7',
-            # Minor 7th
-            'Cm7', 'Dm7', 'Em7', 'Fm7', 'Gm7', 'Am7',
-            # Diminished
-            'Cdim', 'Ddim', 'Edim', 'Fdim', 'Gdim', 'Adim', 'Bdim',
-            # Augmented
-            'Caug', 'Daug', 'Eaug', 'Faug', 'Gaug', 'Aaug',
-            # Sus chords
-            'Csus2', 'Csus4', 'Dsus2', 'Dsus4', 'Esus2', 'Esus4',
-            'Fsus2', 'Fsus4', 'Gsus2', 'Gsus4', 'Asus2', 'Asus4',
+        # Organized chord sections
+        chord_sections = [
+            ('SINGLE NOTES', ['C4n', 'D4n', 'E4n', 'F4n', 'G4n', 'A4n', 'B4n',
+                              'C5n', 'D5n', 'E5n', 'F5n', 'G5n', 'A5n', 'B5n']),
+            ('MAJOR CHORDS', ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'Db', 'Eb', 'Gb', 'Ab', 'Bb']),
+            ('MINOR CHORDS', ['Cm', 'Dm', 'Em', 'Fm', 'Gm', 'Am', 'Bm', 'C#m', 'Ebm', 'F#m', 'Abm', 'Bbm']),
+            ('DOMINANT 7TH', ['C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'B7', 'Bb7', 'Eb7', 'Ab7']),
+            ('MAJOR 7TH', ['Cmaj7', 'Dmaj7', 'Emaj7', 'Fmaj7', 'Gmaj7', 'Amaj7', 'Bmaj7']),
+            ('MINOR 7TH', ['Cm7', 'Dm7', 'Em7', 'Fm7', 'Gm7', 'Am7', 'Bm7']),
+            ('SUSPENDED', ['Csus2', 'Csus4', 'Dsus2', 'Dsus4', 'Esus2', 'Esus4',
+                           'Fsus2', 'Fsus4', 'Gsus2', 'Gsus4', 'Asus2', 'Asus4']),
+            ('9TH CHORDS', ['C9', 'D9', 'E9', 'F9', 'G9', 'A9', 'Cm9', 'Dm9', 'Em9', 'Am9']),
+            ('6TH CHORDS', ['C6', 'D6', 'E6', 'F6', 'G6', 'A6', 'Cm6', 'Dm6', 'Em6', 'Am6']),
+            ('ADD9 CHORDS', ['Cadd9', 'Dadd9', 'Eadd9', 'Fadd9', 'Gadd9', 'Aadd9']),
+            ('POWER CHORDS', ['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5']),
+            ('DIMINISHED', ['Cdim', 'Ddim', 'Edim', 'Fdim', 'Gdim', 'Adim', 'Bdim']),
+            ('AUGMENTED', ['Caug', 'Daug', 'Eaug', 'Faug', 'Gaug', 'Aaug']),
         ]
         
-        for chord in chords:
-            self.create_chord_button(chord_container, chord)
+        for section_name, chords in chord_sections:
+            # Section header
+            section_label = tk.Label(chord_container, text=section_name, 
+                                    bg=self.panel_color, fg='#FFD700',
+                                    font=('Arial', 11, 'bold'))
+            section_label.pack(pady=(10, 5))
+            
+            # Chords in this section
+            for chord in chords:
+                self.create_chord_button(chord_container, chord)
         
         chord_container.update_idletasks()
         palette_canvas.config(scrollregion=palette_canvas.bbox("all"))
@@ -335,26 +356,35 @@ class MusicApp:
     def draw_timeline_grid(self):
         """Draw the timeline grid"""
         self.timeline.delete('grid')
+        self.timeline.delete('header')
         
         # Use full scrollable width
         width = self.timeline_beats * self.beat_width
         height = int(self.timeline.cget('scrollregion').split()[3]) if self.timeline.cget('scrollregion') else 500
         
+        # Draw header background for beat numbers
+        header_height = 25
+        self.timeline.create_rectangle(0, 0, width, header_height, 
+                                      fill='#2a2a2a', outline='', tags='header')
+        
         # Vertical lines (beats) - draw all beats
         for i in range(0, width, self.beat_width):
-            self.timeline.create_line(i, 0, i, height, fill='#333', tags='grid')
+            # Draw line starting from header area
+            self.timeline.create_line(i, header_height, i, height, fill='#333', tags='grid')
             beat_num = i // self.beat_width
-            self.timeline.create_text(i + 5, 10, text=str(beat_num), 
-                                     fill='#666', anchor='nw', tags='grid')
+            # Draw beat number in header area
+            self.timeline.create_text(i + 5, header_height//2, text=str(beat_num), 
+                                     fill='#FFD700', anchor='w', tags='header',
+                                     font=('Arial', 10, 'bold'))
         
-        # Horizontal lines (tracks)
+        # Horizontal lines (tracks) - start below header
         track_height = 60
-        for i in range(track_height, height, track_height):
+        for i in range(header_height + track_height, height, track_height):
             self.timeline.create_line(0, i, width, i, fill='#333', tags='grid')
         
-        # Add track labels
-        for track_num in range(0, height // track_height):
-            self.timeline.create_text(5, track_num * track_height + 30, 
+        # Add track labels - adjust for header
+        for track_num in range(0, (height - header_height) // track_height):
+            self.timeline.create_text(5, header_height + track_num * track_height + 30, 
                                      text=f'Track {track_num + 1}', 
                                      fill='#555', anchor='w', tags='grid',
                                      font=('Arial', 9, 'italic'))
@@ -365,12 +395,18 @@ class MusicApp:
         canvas_x = self.timeline.canvasx(event.x)
         canvas_y = self.timeline.canvasy(event.y)
         
+        header_height = 25
+        
+        # Ignore clicks in header area
+        if canvas_y < header_height:
+            return
+        
         # Check if clicking on the right edge of a block for stretching
         for block in self.chord_blocks:
             x = block.position * self.beat_width
             width = block.duration * self.beat_width
             right_edge = x + width
-            track_y = block.track * 60 + 5
+            track_y = header_height + block.track * 60 + 5
             track_y_end = track_y + 50
             
             # Check if near right edge (within 10 pixels) and on same track
@@ -383,7 +419,7 @@ class MusicApp:
         if self.dragging_chord:
             # Add chord to timeline
             beat_position = int(canvas_x // self.beat_width)
-            track = int(canvas_y // 60)  # Determine which track/row
+            track = int((canvas_y - header_height) // 60)  # Determine which track/row, accounting for header
             
             new_block = ChordBlock(self.dragging_chord, beat_position, duration=1.0, track=track)
             self.chord_blocks.append(new_block)
@@ -438,7 +474,8 @@ class MusicApp:
         """Draw a chord block on the timeline"""
         x = block.position * self.beat_width
         track_height = 60
-        y = block.track * track_height + 5  # Position based on track number
+        header_height = 25
+        y = header_height + block.track * track_height + 5  # Position based on track number, below header
         width = block.duration * self.beat_width - 4
         height = track_height - 10  # Fit within track with padding
         
@@ -451,6 +488,55 @@ class MusicApp:
                                          font=('Arial', 12, 'bold'))
         block.canvas_id = rect
         block.text_id = text
+        
+        # Ensure header stays on top
+        self.timeline.tag_raise('header')
+    
+    def timeline_release(self, event):
+        """Handle release on timeline"""
+        self.dragging_chord = None
+        self.stretching_block = None
+    
+    def timeline_right_click(self, event):
+        """Handle right-click to delete chord"""
+        # Get actual canvas coordinates
+        canvas_x = self.timeline.canvasx(event.x)
+        canvas_y = self.timeline.canvasy(event.y)
+        
+        # Find chord at position
+        items = self.timeline.find_overlapping(canvas_x-5, canvas_y-5, 
+                                               canvas_x+5, canvas_y+5)
+        for item in items:
+            for block in self.chord_blocks:
+                if block.canvas_id == item or block.text_id == item:
+                    if block.canvas_id:
+                        self.timeline.delete(block.canvas_id)
+                    if block.text_id:
+                        self.timeline.delete(block.text_id)
+                    self.chord_blocks.remove(block)
+                    return
+    
+    def draw_chord_block(self, block):
+        """Draw a chord block on the timeline"""
+        x = block.position * self.beat_width
+        track_height = 60
+        header_height = 25
+        y = header_height + block.track * track_height + 5  # Position based on track number, below header
+        width = block.duration * self.beat_width - 4
+        height = track_height - 10  # Fit within track with padding
+        
+        color = self.chord_color_map.get(block.chord_name, '#888')
+        
+        rect = self.timeline.create_rectangle(x + 2, y, x + width, y + height,
+                                              fill=color, outline='white', width=2)
+        text = self.timeline.create_text(x + width/2, y + height/2,
+                                         text=block.chord_name, fill='white',
+                                         font=('Arial', 12, 'bold'))
+        block.canvas_id = rect
+        block.text_id = text
+        
+        # Ensure header stays on top
+        self.timeline.tag_raise('header')
     
     def update_bpm(self):
         """Update BPM"""
