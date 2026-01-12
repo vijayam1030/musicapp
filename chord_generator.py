@@ -1,14 +1,15 @@
 """
-Chord Generator - Creates audio for musical chords
+Chord Generator - Creates high-quality audio for musical chords
 """
 
 import numpy as np
 import pygame
+from scipy import signal
 
 class ChordGenerator:
-    """Generates chord sounds using sine wave synthesis"""
+    """Generates high-quality chord sounds using advanced synthesis"""
     
-    def __init__(self, sample_rate=44100):
+    def __init__(self, sample_rate=48000):  # Higher sample rate for better quality
         self.sample_rate = sample_rate
         
         # Note frequencies (A4 = 440 Hz standard)
@@ -117,146 +118,180 @@ class ChordGenerator:
         self.current_instrument = instrument_name
     
     def generate_tone(self, frequency, duration=1.0, volume=0.3, instrument='Piano'):
-        """Generate a single tone with instrument-specific synthesis"""
+        """Generate a high-quality tone with advanced synthesis"""
         num_samples = int(self.sample_rate * duration)
         t = np.linspace(0, duration, num_samples, False)
         
-        # Generate wave based on instrument type
+        # Anti-aliasing: band-limit harmonics to prevent aliasing
+        nyquist = self.sample_rate / 2
+        max_harmonic = int(nyquist / frequency) - 1
+        
+        # Generate wave based on instrument type with high-quality synthesis
         if instrument == 'Piano':
-            # Piano-like sound with strong harmonics
-            wave = np.sin(2 * np.pi * frequency * t)  # Fundamental
-            wave += 0.5 * np.sin(2 * np.pi * frequency * 2 * t)  # 2nd harmonic
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 3 * t)  # 3rd harmonic
-            wave += 0.15 * np.sin(2 * np.pi * frequency * 4 * t)  # 4th harmonic
-            wave += 0.08 * np.sin(2 * np.pi * frequency * 5 * t)  # 5th harmonic
-            wave = wave / 2.03
+            # Piano with inharmonicity and complex decay
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.6, 0.4, 0.3, 0.2, 0.15, 0.1, 0.08, 0.05]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                # Add slight inharmonicity for realistic piano sound
+                inharm = 1 + 0.0001 * h * h
+                decay = np.exp(-3 * h * t / duration)  # Different decay per harmonic
+                wave += amp * np.sin(2 * np.pi * frequency * h * inharm * t) * decay
+            wave = wave / 2.5
             
         elif instrument == 'Guitar':
-            # Guitar-like sound with plucked characteristics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.4 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.25 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.1 * np.sin(2 * np.pi * frequency * 4 * t)
-            # Add pluck effect
-            pluck_decay = np.exp(-3 * t / duration)
-            wave = wave * pluck_decay
-            wave = wave / 1.75
+            # High-quality guitar with realistic pluck and body resonance
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.5, 0.35, 0.2, 0.12, 0.08, 0.05]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                # Exponential decay per harmonic (higher harmonics decay faster)
+                decay = np.exp(-2.5 * h * t / duration)
+                phase = np.random.uniform(0, 0.1)  # Slight random phase for realism
+                wave += amp * np.sin(2 * np.pi * frequency * h * t + phase) * decay
+            # Add body resonance
+            resonance = 0.02 * np.sin(2 * np.pi * 100 * t) * np.exp(-8 * t / duration)
+            wave = (wave + resonance) / 1.9
             
         elif instrument == 'Strings':
-            # Smooth string sound with rich harmonics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.6 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.4 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.25 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave += 0.15 * np.sin(2 * np.pi * frequency * 5 * t)
-            wave += 0.1 * np.sin(2 * np.pi * frequency * 6 * t)
-            # Add vibrato for warmth
-            vibrato = 1 + 0.005 * np.sin(2 * np.pi * 5 * t)
-            wave = wave * vibrato
-            wave = wave / 2.5
+            # Smooth orchestral strings with rich overtones
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.7, 0.5, 0.35, 0.25, 0.18, 0.12, 0.08, 0.05]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Enhanced vibrato for warmth
+            vibrato_freq = 5.5 + 0.5 * np.sin(2 * np.pi * 0.2 * t)  # Variable vibrato
+            vibrato = 1 + 0.008 * np.sin(2 * np.pi * vibrato_freq * t)
+            wave = wave * vibrato / 3.0
             
         elif instrument == 'Organ':
-            # Organ sound - pure harmonics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave = wave / 2.5
+            # Hammond-style organ with drawbar harmonics
+            wave = np.zeros(num_samples)
+            drawbars = [0.8, 1.0, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15]  # Drawbar settings
+            drawbar_harmonics = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 8]  # Sub-octave to high harmonics
+            for amp, h in zip(drawbars[:min(len(drawbars), max_harmonic)], drawbar_harmonics):
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Add slight Leslie effect (rotary speaker)
+            tremolo = 1 + 0.03 * np.sin(2 * np.pi * 6 * t)
+            wave = wave * tremolo / 3.5
             
         elif instrument == 'Synth':
-            # Synthesizer sound with square wave characteristics
-            wave = np.sign(np.sin(2 * np.pi * frequency * t))  # Square wave
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.2 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave = wave / 1.5
-            # Add filter sweep
-            sweep = 1 - 0.3 * np.exp(-5 * t / duration)
-            wave = wave * sweep
+            # Analog synthesizer with PWM and filter
+            # Create pulse width modulation
+            pwm = 0.5 + 0.3 * np.sin(2 * np.pi * 0.5 * t)
+            wave = signal.square(2 * np.pi * frequency * t, duty=pwm)
+            # Add harmonics
+            wave += 0.4 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.25 * np.sin(2 * np.pi * frequency * 3 * t)
+            # Low-pass filter sweep
+            cutoff_sweep = 0.3 + 0.7 * np.exp(-4 * t / duration)
+            wave = wave * cutoff_sweep / 2.0
             
         elif instrument == 'Bass':
-            # Bass sound - emphasis on low harmonics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.8 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.4 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.2 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave = wave / 2.4
+            # Electric bass with strong fundamental and sub-bass
+            wave = np.zeros(num_samples)
+            harmonics = [1.2, 0.9, 0.5, 0.3, 0.15, 0.08]  # Emphasis on low
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Add subtle attack click for pick sound
+            click = 0.1 * np.exp(-50 * t) * np.random.normal(0, 1, num_samples)
+            wave = (wave + click) / 2.6
             
         elif instrument == 'Flute':
-            # Flute sound - soft, breathy with fewer harmonics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.15 * np.sin(2 * np.pi * frequency * 3 * t)
-            # Add subtle vibrato
-            vibrato = 1 + 0.008 * np.sin(2 * np.pi * 5.5 * t)
+            # Flute - airy with filtered noise for breath
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.35, 0.18, 0.1, 0.05]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Enhanced vibrato
+            vibrato_depth = 0.01 * (1 + 0.3 * t / duration)  # Growing vibrato
+            vibrato = 1 + vibrato_depth * np.sin(2 * np.pi * 5.5 * t)
             wave = wave * vibrato
-            # Add breath noise (subtle)
-            noise = np.random.normal(0, 0.02, len(t))
-            wave = wave + noise
-            wave = wave / 1.5
+            # Breath noise through band-pass filter
+            noise = np.random.normal(0, 0.04, len(t))
+            # Simple band-pass (frequency range for breath)
+            breath = noise * np.sin(2 * np.pi * frequency * 0.5 * t) * 0.3
+            wave = (wave + breath) / 1.7
             
         elif instrument == 'Saxophone':
-            # Saxophone - rich, reedy sound with strong harmonics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.4 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave += 0.25 * np.sin(2 * np.pi * frequency * 5 * t)
-            # Vibrato for expressiveness
-            vibrato = 1 + 0.012 * np.sin(2 * np.pi * 6 * t)
-            wave = wave * vibrato
-            wave = wave / 2.8
+            # Saxophone - reedy with odd/even harmonic balance
+            wave = np.zeros(num_samples)
+            # Odd and even harmonics for reed character
+            harmonics = [1.0, 0.8, 0.6, 0.5, 0.35, 0.25, 0.18, 0.12]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                # Odd harmonics slightly stronger (reed characteristic)
+                if h % 2 == 1:
+                    amp *= 1.15
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Expressive vibrato with depth variation
+            vib_depth = 0.015 * (1 + 0.2 * np.sin(2 * np.pi * 0.3 * t))
+            vibrato = 1 + vib_depth * np.sin(2 * np.pi * 6 * t)
+            wave = wave * vibrato / 3.5
             
         elif instrument == 'Trumpet':
-            # Trumpet - bright, brassy with strong upper harmonics
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.6 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.4 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave += 0.35 * np.sin(2 * np.pi * frequency * 5 * t)
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 6 * t)
-            # Attack envelope for brass punch
-            attack_env = np.minimum(1.0, t * 50)
-            wave = wave * attack_env
-            wave = wave / 2.9
+            # Trumpet - bright brass with strong upper harmonics
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                # Upper harmonics stronger for brightness
+                if h > 3:
+                    amp *= 1.1
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Sharp attack with overshoot
+            attack = np.minimum(1.0, t * 80)
+            overshoot = 1 + 0.2 * np.exp(-15 * t)
+            wave = wave * attack * overshoot / 3.5
             
         elif instrument == 'Trombone':
-            # Trombone - warm, mellow brass
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave += 0.2 * np.sin(2 * np.pi * frequency * 5 * t)
-            # Slight slide effect
-            slide = 1 + 0.003 * np.exp(-8 * t / duration) * np.sin(2 * np.pi * 20 * t)
-            wave = wave * slide
-            wave = wave / 2.6
+            # Trombone - warm, mellow brass with slide
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.75, 0.55, 0.4, 0.28, 0.18, 0.12]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Portamento/slide effect at start
+            slide_time = min(0.05, duration * 0.15)
+            slide_mask = t < slide_time
+            slide_bend = np.where(slide_mask, 
+                                 1 - 0.05 * (1 - t / slide_time), 1)
+            wave = wave * slide_bend / 3.0
             
         elif instrument == 'Violin':
-            # Violin - very rich harmonics with vibrato
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.6 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.45 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave += 0.2 * np.sin(2 * np.pi * frequency * 5 * t)
-            wave += 0.15 * np.sin(2 * np.pi * frequency * 6 * t)
-            wave += 0.1 * np.sin(2 * np.pi * frequency * 7 * t)
-            # Strong vibrato
-            vibrato = 1 + 0.01 * np.sin(2 * np.pi * 6 * t)
-            wave = wave * vibrato
-            wave = wave / 2.7
+            # Violin - rich harmonics with bow pressure simulation
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.7, 0.5, 0.4, 0.3, 0.22, 0.16, 0.12, 0.08]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                # Add slight detuning for chorus effect
+                detune = 1 + np.random.uniform(-0.001, 0.001)
+                wave += amp * np.sin(2 * np.pi * frequency * h * detune * t)
+            # Realistic vibrato with depth crescendo
+            vib_depth = 0.012 * np.minimum(1.0, t * 3)  # Vibrato grows
+            vib_rate = 6 + 0.5 * np.sin(2 * np.pi * 0.2 * t)  # Variable rate
+            vibrato = 1 + vib_depth * np.sin(2 * np.pi * vib_rate * t)
+            wave = wave * vibrato / 3.2
             
         elif instrument == 'Cello':
-            # Cello - deep, rich, warm
-            wave = np.sin(2 * np.pi * frequency * t)
-            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
-            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
-            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
-            wave += 0.2 * np.sin(2 * np.pi * frequency * 5 * t)
-            wave += 0.15 * np.sin(2 * np.pi * frequency * 6 * t)
-            # Subtle vibrato
-            vibrato = 1 + 0.007 * np.sin(2 * np.pi * 5 * t)
+            # Cello - deep, resonant with body formants
+            wave = np.zeros(num_samples)
+            harmonics = [1.0, 0.8, 0.6, 0.45, 0.32, 0.22, 0.15, 0.1]
+            for i, amp in enumerate(harmonics[:min(len(harmonics), max_harmonic)]):
+                h = i + 1
+                # Lower harmonics stronger for warmth
+                if h <= 3:
+                    amp *= 1.1
+                wave += amp * np.sin(2 * np.pi * frequency * h * t)
+            # Subtle vibrato (less than violin)
+            vibrato = 1 + 0.009 * np.sin(2 * np.pi * 5.2 * t)
             wave = wave * vibrato
-            wave = wave / 2.8
+            # Body resonance (formant around 200-300Hz)
+            resonance = 0.08 * np.sin(2 * np.pi * 250 * t) * np.exp(-3 * t / duration)
+            wave = (wave + resonance) / 3.3
             
         else:
             # Default to piano
@@ -269,6 +304,16 @@ class ChordGenerator:
         envelope = self.create_envelope(num_samples, instrument)
         wave = wave * envelope * volume
         
+        # Add subtle reverb for depth (simple comb filter)
+        wave = self.add_reverb(wave, duration)
+        
+        # Apply gentle low-pass filter to remove harsh high frequencies
+        wave = self.apply_lowpass(wave)
+        
+        # Normalize to prevent clipping
+        if np.max(np.abs(wave)) > 0:
+            wave = wave / np.max(np.abs(wave)) * 0.9
+        
         # Convert to 16-bit integers
         wave = (wave * 32767).astype(np.int16)
         
@@ -278,6 +323,30 @@ class ChordGenerator:
         stereo_wave = np.column_stack((left, right))
         
         return stereo_wave
+    
+    def add_reverb(self, wave, duration):
+        """Add simple reverb using comb filtering"""
+        # Short reverb for natural room sound
+        delay_samples = int(self.sample_rate * 0.03)  # 30ms delay
+        reverb = np.zeros_like(wave)
+        
+        if len(wave) > delay_samples:
+            reverb[delay_samples:] = wave[:-delay_samples] * 0.15
+            # Add second reflection
+            delay2 = int(self.sample_rate * 0.047)
+            if len(wave) > delay2:
+                reverb[delay2:] += wave[:-delay2] * 0.08
+        
+        return wave + reverb
+    
+    def apply_lowpass(self, wave):
+        """Apply gentle low-pass filter to smooth the sound"""
+        # Simple moving average for smoothing
+        window_size = 3
+        kernel = np.ones(window_size) / window_size
+        filtered = np.convolve(wave, kernel, mode='same')
+        # Mix with original for subtle effect
+        return 0.7 * wave + 0.3 * filtered
     
     def create_envelope(self, num_samples, instrument='Piano'):
         """Create an ADSR envelope for more natural sound based on instrument"""

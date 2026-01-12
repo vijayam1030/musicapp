@@ -128,6 +128,12 @@ class MusicApp:
                                    width=10, height=2, relief=tk.RAISED, bd=3)
         self.stop_btn.pack(side=tk.LEFT, padx=10, pady=10)
         
+        # Repeat button
+        self.repeat_btn = tk.Button(control_frame, text="🔁 Repeat", command=self.toggle_repeat,
+                                     bg='#9C27B0', fg='white', font=('Arial', 14, 'bold'),
+                                     width=10, height=2, relief=tk.RAISED, bd=3)
+        self.repeat_btn.pack(side=tk.LEFT, padx=10, pady=10)
+        
         # New button
         new_btn = tk.Button(control_frame, text="📄 New", command=self.new_song,
                            bg='#2196F3', fg='white', font=('Arial', 14, 'bold'),
