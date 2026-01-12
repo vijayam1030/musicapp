@@ -1,0 +1,114 @@
+{
+  "bpm": 100,
+  "key": "C",
+  "blocks": [
+    {
+      "chord_name": "C",
+      "position": 0,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "C",
+      "position": 1,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "G",
+      "position": 2,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "G",
+      "position": 3,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "A",
+      "position": 4,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "A",
+      "position": 5,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "G",
+      "position": 6,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "F",
+      "position": 8,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "F",
+      "position": 9,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "E",
+      "position": 10,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "E",
+      "position": 11,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "D",
+      "position": 12,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "D",
+      "position": 13,
+      "duration": 1,
+      "track": 0
+    },
+    {
+      "chord_name": "C",
+      "position": 14,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "C",
+      "position": 0,
+      "duration": 4,
+      "track": 1
+    },
+    {
+      "chord_name": "G",
+      "position": 4,
+      "duration": 4,
+      "track": 1
+    },
+    {
+      "chord_name": "F",
+      "position": 8,
+      "duration": 4,
+      "track": 1
+    },
+    {
+      "chord_name": "C",
+      "position": 12,
+      "duration": 4,
+      "track": 1
+    }
+  ]
+}

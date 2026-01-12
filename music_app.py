@@ -4,19 +4,22 @@ A simple, fast music creation tool with pre-defined chords
 """
 
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import pygame
 import numpy as np
 import threading
 import os
+import json
+import wave
 from chord_generator import ChordGenerator
 
 class ChordBlock:
     """Represents a chord block on the timeline"""
-    def __init__(self, chord_name, position, duration=1.0):
+    def __init__(self, chord_name, position, duration=1.0, track=0):
         self.chord_name = chord_name
         self.position = position  # Position in beats
         self.duration = duration  # Duration in beats
+        self.track = track  # Track/row number (0, 1, 2, ...)
         self.canvas_id = None
         self.text_id = None
 
@@ -45,14 +48,42 @@ class MusicApp:
         self.bg_color = '#2b2b2b'
         self.panel_color = '#3c3c3c'
         self.timeline_color = '#1e1e1e'
-        self.chord_colors = {
-            'C': '#FF6B6B', 'Dm': '#4ECDC4', 'Em': '#45B7D1',
-            'F': '#FFA07A', 'G': '#98D8C8', 'Am': '#F7DC6F',
-            'Bdim': '#BB8FCE', 'Cmaj7': '#FF6B6B', 'Dm7': '#4ECDC4',
-            'Em7': '#45B7D1', 'Fmaj7': '#FFA07A', 'G7': '#98D8C8'
+        
+        # Generate colors for all chords
+        self.chord_color_map = {
+            # Major chords - warm colors
+            'C': '#FF6B6B', 'D': '#FF8C42', 'E': '#FFA726', 'F': '#FFA07A', 
+            'G': '#98D8C8', 'A': '#F7DC6F', 'B': '#FFD93D',
+            'Db': '#FF7043', 'Eb': '#FFC470', 'Gb': '#FFB347', 'Ab': '#FFCC80', 'Bb': '#FFE66D',
+            # Minor chords - cool colors
+            'Cm': '#4ECDC4', 'Dm': '#45B7D1', 'Em': '#5DADE2', 'Fm': '#85C1E2',
+            'Gm': '#7FB3D5', 'Am': '#6FA3D8', 'Bm': '#5499C7',
+            'C#m': '#52B2BF', 'Ebm': '#48C9B0', 'F#m': '#1ABC9C', 'Abm': '#16A085', 'Bbm': '#45B39D',
+            # 7th chords - purple/pink
+            'C7': '#E74C3C', 'D7': '#EC7063', 'E7': '#F1948A', 'F7': '#F5B7B1',
+            'G7': '#D98880', 'A7': '#CD6155', 'B7': '#C0392B',
+            # Major 7th - light purple
+            'Cmaj7': '#BB8FCE', 'Dmaj7': '#C39BD3', 'Emaj7': '#D7BDE2', 
+            'Fmaj7': '#E8DAEF', 'Gmaj7': '#AF7AC5', 'Amaj7': '#A569BD',
+            # Minor 7th - teal
+            'Cm7': '#17A589', 'Dm7': '#1ABC9C', 'Em7': '#48C9B0', 
+            'Fm7': '#76D7C4', 'Gm7': '#45B39D', 'Am7': '#138D75',
+            # Diminished - gray/brown
+            'Cdim': '#7F8C8D', 'Ddim': '#95A5A6', 'Edim': '#BDC3C7', 
+            'Fdim': '#AAB7B8', 'Gdim': '#99A3A4', 'Adim': '#85929E', 'Bdim': '#717D7E',
+            # Augmented - orange/red
+            'Caug': '#E67E22', 'Daug': '#D68910', 'Eaug': '#CA6F1E',
+            'Faug': '#BA4A00', 'Gaug': '#A04000', 'Aaug': '#873600',
+            # Sus chords - yellow/green
+            'Csus2': '#F4D03F', 'Csus4': '#F7DC6F', 'Dsus2': '#F9E79F', 'Dsus4': '#FAD7A0',
+            'Esus2': '#F8B739', 'Esus4': '#F5B041', 'Fsus2': '#EB984E', 'Fsus4': '#E59866',
+            'Gsus2': '#DC7633', 'Gsus4': '#D68910', 'Asus2': '#CA6F1E', 'Asus4': '#BA4A00',
         }
         
         self.setup_ui()
+        
+        # Load default Happy Birthday song
+        self.root.after(200, self.load_default_song)
         
     def setup_ui(self):
         """Setup the user interface"""
@@ -73,17 +104,35 @@ class MusicApp:
                                    width=10, height=2, relief=tk.RAISED, bd=3)
         self.stop_btn.pack(side=tk.LEFT, padx=10, pady=10)
         
+        # New button
+        new_btn = tk.Button(control_frame, text="📄 New", command=self.new_song,
+                           bg='#2196F3', fg='white', font=('Arial', 14, 'bold'),
+                           width=8, height=2, relief=tk.RAISED, bd=3)
+        new_btn.pack(side=tk.LEFT, padx=5, pady=10)
+        
+        # Export Audio button
+        export_btn = tk.Button(control_frame, text="🎵 Export", command=self.export_audio,
+                              bg='#00BCD4', fg='white', font=('Arial', 13, 'bold'),
+                              width=8, height=2, relief=tk.RAISED, bd=3)
+        export_btn.pack(side=tk.LEFT, padx=5, pady=10)
+        
+        # Save Project button
+        save_btn = tk.Button(control_frame, text="💾 Save", command=self.save_project,
+                            bg='#0097A7', fg='white', font=('Arial', 13, 'bold'),
+                            width=8, height=2, relief=tk.RAISED, bd=3)
+        save_btn.pack(side=tk.LEFT, padx=5, pady=10)
+        
+        # Load button
+        load_btn = tk.Button(control_frame, text="📂 Open", command=self.load_song,
+                            bg='#009688', fg='white', font=('Arial', 13, 'bold'),
+                            width=8, height=2, relief=tk.RAISED, bd=3)
+        load_btn.pack(side=tk.LEFT, padx=5, pady=10)
+        
         # Clear button
         clear_btn = tk.Button(control_frame, text="🗑 Clear", command=self.clear_timeline,
                              bg='#FF9800', fg='white', font=('Arial', 14, 'bold'),
-                             width=10, height=2, relief=tk.RAISED, bd=3)
-        clear_btn.pack(side=tk.LEFT, padx=10, pady=10)
-        
-        # Repeat button
-        self.repeat_btn = tk.Button(control_frame, text="🔁 Repeat", command=self.toggle_repeat,
-                                    bg='#9C27B0', fg='white', font=('Arial', 14, 'bold'),
-                                    width=10, height=2, relief=tk.RAISED, bd=3)
-        self.repeat_btn.pack(side=tk.LEFT, padx=10, pady=10)
+                             width=8, height=2, relief=tk.RAISED, bd=3)
+        clear_btn.pack(side=tk.LEFT, padx=5, pady=10)
         
         # BPM control
         tk.Label(control_frame, text="BPM:", bg=self.panel_color, 
@@ -130,9 +179,26 @@ class MusicApp:
         palette_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         palette_canvas.create_window((0, 0), window=chord_container, anchor='nw')
         
-        # Common chords
-        chords = ['C', 'Dm', 'Em', 'F', 'G', 'Am', 'Bdim',
-                 'Cmaj7', 'Dm7', 'Em7', 'Fmaj7', 'G7']
+        # Comprehensive chord and note list
+        chords = [
+            # Major chords
+            'C', 'D', 'E', 'F', 'G', 'A', 'B', 'Db', 'Eb', 'Gb', 'Ab', 'Bb',
+            # Minor chords  
+            'Cm', 'Dm', 'Em', 'Fm', 'Gm', 'Am', 'Bm', 'C#m', 'Ebm', 'F#m', 'Abm', 'Bbm',
+            # 7th chords
+            'C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'B7',
+            # Major 7th
+            'Cmaj7', 'Dmaj7', 'Emaj7', 'Fmaj7', 'Gmaj7', 'Amaj7',
+            # Minor 7th
+            'Cm7', 'Dm7', 'Em7', 'Fm7', 'Gm7', 'Am7',
+            # Diminished
+            'Cdim', 'Ddim', 'Edim', 'Fdim', 'Gdim', 'Adim', 'Bdim',
+            # Augmented
+            'Caug', 'Daug', 'Eaug', 'Faug', 'Gaug', 'Aaug',
+            # Sus chords
+            'Csus2', 'Csus4', 'Dsus2', 'Dsus4', 'Esus2', 'Esus4',
+            'Fsus2', 'Fsus4', 'Gsus2', 'Gsus4', 'Asus2', 'Asus4',
+        ]
         
         for chord in chords:
             self.create_chord_button(chord_container, chord)
@@ -151,6 +217,24 @@ class MusicApp:
         # Timeline canvas with scrollbar
         timeline_container = tk.Frame(timeline_frame, bg=self.timeline_color)
         timeline_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Navigation buttons frame
+        nav_frame = tk.Frame(timeline_container, bg=self.timeline_color)
+        nav_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 5))
+        
+        # Scroll left button
+        btn_left = tk.Button(nav_frame, text="◄◄ Scroll Left", command=self.scroll_left,
+                            bg='#555', fg='white', font=('Arial', 10, 'bold'))
+        btn_left.pack(side=tk.LEFT, padx=5)
+        
+        # Scroll right button
+        btn_right = tk.Button(nav_frame, text="Scroll Right ►►", command=self.scroll_right,
+                             bg='#555', fg='white', font=('Arial', 10, 'bold'))
+        btn_right.pack(side=tk.LEFT, padx=5)
+        
+        # Info label
+        tk.Label(nav_frame, text="Tip: Use scrollbar below or Shift+MouseWheel to scroll", 
+                bg=self.timeline_color, fg='#aaa', font=('Arial', 9)).pack(side=tk.LEFT, padx=20)
         
         # Horizontal scrollbar
         h_scrollbar = ttk.Scrollbar(timeline_container, orient=tk.HORIZONTAL)
@@ -175,12 +259,16 @@ class MusicApp:
         self.timeline.bind('<Button-3>', self.timeline_right_click)
         self.timeline.bind('<Configure>', self.on_timeline_configure)
         
+        # Enable mouse wheel scrolling
+        self.timeline.bind('<MouseWheel>', self.on_mousewheel)
+        self.timeline.bind('<Shift-MouseWheel>', self.on_shift_mousewheel)
+        
         # Initialize after a short delay to ensure proper sizing
         self.root.after(100, self.initialize_timeline)
         
     def create_chord_button(self, parent, chord_name):
         """Create a draggable chord button"""
-        color = self.chord_colors.get(chord_name, '#888')
+        color = self.chord_color_map.get(chord_name, '#888')
         btn = tk.Button(parent, text=chord_name, bg=color, fg='white',
                        font=('Arial', 12, 'bold'), width=12, height=2,
                        relief=tk.RAISED, bd=3, cursor='hand2')
@@ -206,6 +294,24 @@ class MusicApp:
         height = max(500, event.height)
         self.timeline.config(scrollregion=(0, 0, width, height))
     
+    def on_mousewheel(self, event):
+        """Handle vertical mouse wheel (scroll horizontally with shift)"""
+        # On Windows, event.delta is typically +-120 per notch
+        pass
+    
+    def on_shift_mousewheel(self, event):
+        """Handle shift+mouse wheel for horizontal scrolling"""
+        # Scroll horizontally when shift is held
+        self.timeline.xview_scroll(int(-1 * (event.delta / 120)), "units")
+    
+    def scroll_left(self):
+        """Scroll timeline to the left"""
+        self.timeline.xview_scroll(-5, "units")
+    
+    def scroll_right(self):
+        """Scroll timeline to the right"""
+        self.timeline.xview_scroll(5, "units")
+    
     def draw_timeline_grid(self):
         """Draw the timeline grid"""
         self.timeline.delete('grid')
@@ -225,6 +331,13 @@ class MusicApp:
         track_height = 60
         for i in range(track_height, height, track_height):
             self.timeline.create_line(0, i, width, i, fill='#333', tags='grid')
+        
+        # Add track labels
+        for track_num in range(0, height // track_height):
+            self.timeline.create_text(5, track_num * track_height + 30, 
+                                     text=f'Track {track_num + 1}', 
+                                     fill='#555', anchor='w', tags='grid',
+                                     font=('Arial', 9, 'italic'))
     
     def timeline_click(self, event):
         """Handle timeline click"""
@@ -237,10 +350,12 @@ class MusicApp:
             x = block.position * self.beat_width
             width = block.duration * self.beat_width
             right_edge = x + width
+            track_y = block.track * 60 + 5
+            track_y_end = track_y + 50
             
-            # Check if near right edge (within 10 pixels)
+            # Check if near right edge (within 10 pixels) and on same track
             if (abs(canvas_x - right_edge) < 10 and 
-                40 <= canvas_y <= 90):
+                track_y <= canvas_y <= track_y_end):
                 self.stretching_block = block
                 self.stretch_start_x = canvas_x
                 return
@@ -248,9 +363,9 @@ class MusicApp:
         if self.dragging_chord:
             # Add chord to timeline
             beat_position = int(canvas_x // self.beat_width)
-            track = int(canvas_y // 60)
+            track = int(canvas_y // 60)  # Determine which track/row
             
-            new_block = ChordBlock(self.dragging_chord, beat_position, duration=1.0)
+            new_block = ChordBlock(self.dragging_chord, beat_position, duration=1.0, track=track)
             self.chord_blocks.append(new_block)
             self.draw_chord_block(new_block)
             self.dragging_chord = None
@@ -302,11 +417,12 @@ class MusicApp:
     def draw_chord_block(self, block):
         """Draw a chord block on the timeline"""
         x = block.position * self.beat_width
-        y = 40
+        track_height = 60
+        y = block.track * track_height + 5  # Position based on track number
         width = block.duration * self.beat_width - 4
-        height = 50
+        height = track_height - 10  # Fit within track with padding
         
-        color = self.chord_colors.get(block.chord_name, '#888')
+        color = self.chord_color_map.get(block.chord_name, '#888')
         
         rect = self.timeline.create_rectangle(x + 2, y, x + width, y + height,
                                               fill=color, outline='white', width=2)
@@ -335,13 +451,14 @@ class MusicApp:
         else:
             self.repeat_btn.config(relief=tk.RAISED, bg='#9C27B0')
     
-    def clear_timeline(self):
+    def clear_timeline(self, confirm=True):
         """Clear all chords from timeline"""
-        if self.chord_blocks and messagebox.askyesno("Clear Timeline", 
+        if confirm and self.chord_blocks and not messagebox.askyesno("Clear Timeline", 
                                                      "Clear all chords?"):
-            self.timeline.delete('all')
-            self.chord_blocks.clear()
-            self.draw_timeline_grid()
+            return
+        self.timeline.delete('all')
+        self.chord_blocks.clear()
+        self.draw_timeline_grid()
     
     def play_music(self):
         """Play the music sequence"""
@@ -360,10 +477,10 @@ class MusicApp:
         thread.start()
     
     def _play_sequence(self):
-        """Play the chord sequence"""
+        """Play the chord sequence with multi-track support"""
         try:
-            # Sort blocks by position
-            sorted_blocks = sorted(self.chord_blocks, key=lambda b: b.position)
+            # Sort blocks by position, then by track
+            sorted_blocks = sorted(self.chord_blocks, key=lambda b: (b.position, b.track))
             
             if not sorted_blocks:
                 return
@@ -374,30 +491,42 @@ class MusicApp:
             while True:
                 # Track current position in beats
                 current_position = 0
+                i = 0
                 
-                for block in sorted_blocks:
+                while i < len(sorted_blocks):
                     if not self.is_playing:
                         return
                     
-                    # Wait for the gap before this chord (silence between chords)
-                    if block.position > current_position:
-                        gap = block.position - current_position
+                    # Get all blocks at the same position (different tracks)
+                    blocks_at_position = []
+                    current_block_position = sorted_blocks[i].position
+                    
+                    while i < len(sorted_blocks) and sorted_blocks[i].position == current_block_position:
+                        blocks_at_position.append(sorted_blocks[i])
+                        i += 1
+                    
+                    # Wait for the gap before these chords
+                    if current_block_position > current_position:
+                        gap = current_block_position - current_position
                         gap_time = int(gap * beat_duration * 1000)
                         pygame.time.wait(gap_time)
                     
-                    # Generate and play chord
-                    sound = self.chord_generator.generate_chord(block.chord_name, 
-                                                               duration=block.duration * beat_duration)
-                    channel = pygame.mixer.find_channel()
-                    if channel:
-                        channel.play(sound)
+                    # Play all chords at this position simultaneously
+                    max_duration = 0
+                    for block in blocks_at_position:
+                        sound = self.chord_generator.generate_chord(block.chord_name, 
+                                                                   duration=block.duration * beat_duration)
+                        channel = pygame.mixer.find_channel()
+                        if channel:
+                            channel.play(sound)
+                        max_duration = max(max_duration, block.duration)
                     
-                    # Wait for block duration
-                    wait_time = int(block.duration * beat_duration * 1000)
+                    # Wait for the longest block duration
+                    wait_time = int(max_duration * beat_duration * 1000)
                     pygame.time.wait(wait_time)
                     
                     # Update current position
-                    current_position = block.position + block.duration
+                    current_position = current_block_position + max_duration
                 
                 # If not in repeat mode, break after one playthrough
                 if not self.repeat_mode:
@@ -411,6 +540,217 @@ class MusicApp:
         """Stop playing music"""
         self.is_playing = False
         pygame.mixer.stop()
+    
+    def new_song(self):
+        """Create a new song"""
+        if self.chord_blocks and not messagebox.askyesno("New Song", 
+                                                          "Create new song? Current song will be lost if not saved."):
+            return
+        self.clear_timeline()
+        self.root.title("Music Composer - New Song")
+    
+    def export_audio(self):
+        """Export the song as a WAV audio file"""
+        if not self.chord_blocks:
+            messagebox.showinfo("Empty Song", "Nothing to export! Add some chords first.")
+            return
+        
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".wav",
+            filetypes=[("WAV Audio", "*.wav"), ("All files", "*.*")],
+            title="Export Audio"
+        )
+        
+        if filename:
+            try:
+                # Show progress
+                progress_msg = tk.Toplevel(self.root)
+                progress_msg.title("Exporting...")
+                progress_msg.geometry("300x100")
+                tk.Label(progress_msg, text="Rendering audio...\nPlease wait.", 
+                        font=('Arial', 12), pady=20).pack()
+                progress_msg.update()
+                
+                # Render the audio
+                audio_data = self._render_audio_to_array()
+                
+                # Save as WAV
+                import wave
+                with wave.open(filename, 'wb') as wav_file:
+                    wav_file.setnchannels(2)  # Stereo
+                    wav_file.setsampwidth(2)   # 16-bit
+                    wav_file.setframerate(44100)
+                    wav_file.writeframes(audio_data.tobytes())
+                
+                progress_msg.destroy()
+                messagebox.showinfo("Success", f"Audio exported successfully!\n{os.path.basename(filename)}")
+            except Exception as e:
+                if 'progress_msg' in locals():
+                    progress_msg.destroy()
+                messagebox.showerror("Error", f"Failed to export audio: {str(e)}")
+    
+    def save_project(self):
+        """Save the current song project as JSON"""
+        if not self.chord_blocks:
+            messagebox.showinfo("Empty Song", "Nothing to save! Add some chords first.")
+            return
+        
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("Project files", "*.json"), ("All files", "*.*")],
+            title="Save Project"
+        )
+        
+        if filename:
+            song_data = {
+                'bpm': self.bpm,
+                'key': self.current_key,
+                'blocks': [
+                    {
+                        'chord_name': block.chord_name,
+                        'position': block.position,
+                        'duration': block.duration,
+                        'track': block.track
+                    }
+                    for block in self.chord_blocks
+                ]
+            }
+            
+            try:
+                with open(filename, 'w') as f:
+                    json.dump(song_data, f, indent=2)
+                self.root.title(f"Music Composer - {os.path.basename(filename)}")
+                messagebox.showinfo("Success", "Song saved successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save song: {str(e)}")
+    
+    def load_song(self):
+        """Load a song from a file"""
+        filename = filedialog.askopenfilename(
+            filetypes=[("Music files", "*.json"), ("All files", "*.*")],
+            title="Open Song"
+        )
+        
+        if filename:
+            try:
+                with open(filename, 'r') as f:
+                    song_data = json.load(f)
+                
+                # Clear current song without confirmation
+                self.clear_timeline(confirm=False)
+                
+                # Load BPM and key
+                self.bpm = song_data.get('bpm', 120)
+                self.bpm_var.set(str(self.bpm))
+                self.current_key = song_data.get('key', 'C')
+                self.key_var.set(self.current_key)
+                
+                # Load blocks
+                for block_data in song_data.get('blocks', []):
+                    block = ChordBlock(
+                        chord_name=block_data['chord_name'],
+                        position=block_data['position'],
+                        duration=block_data.get('duration', 1.0),
+                        track=block_data.get('track', 0)
+                    )
+                    self.chord_blocks.append(block)
+                    self.draw_chord_block(block)
+                
+                self.root.title(f"Music Composer - {os.path.basename(filename)}")
+                messagebox.showinfo("Success", "Song loaded successfully!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load song: {str(e)}")
+    
+    def _render_audio_to_array(self):
+        """Render the entire song to a numpy array"""
+        # Sort blocks by position
+        sorted_blocks = sorted(self.chord_blocks, key=lambda b: (b.position, b.track))
+        
+        if not sorted_blocks:
+            return np.array([], dtype=np.int16)
+        
+        # Calculate total duration
+        max_end = max(block.position + block.duration for block in sorted_blocks)
+        beat_duration = 60.0 / self.bpm
+        total_duration = max_end * beat_duration
+        
+        # Create silence buffer
+        num_samples = int(44100 * total_duration)
+        final_audio = np.zeros((num_samples, 2), dtype=np.float32)
+        
+        # Process blocks by position to handle overlapping tracks
+        i = 0
+        while i < len(sorted_blocks):
+            current_block_position = sorted_blocks[i].position
+            blocks_at_position = []
+            
+            # Get all blocks at the same position
+            while i < len(sorted_blocks) and sorted_blocks[i].position == current_block_position:
+                blocks_at_position.append(sorted_blocks[i])
+                i += 1
+            
+            # Render each block at this position
+            for block in blocks_at_position:
+                # Generate chord audio
+                chord_duration = block.duration * beat_duration
+                sound = self.chord_generator.generate_chord(block.chord_name, duration=chord_duration)
+                
+                # Convert pygame sound to numpy array
+                sound_array = pygame.sndarray.array(sound)
+                
+                # Calculate position in samples
+                start_sample = int(block.position * beat_duration * 44100)
+                end_sample = min(start_sample + len(sound_array), num_samples)
+                
+                # Mix into final audio
+                sound_length = end_sample - start_sample
+                if sound_length > 0:
+                    final_audio[start_sample:end_sample] += sound_array[:sound_length].astype(np.float32)
+        
+        # Normalize to prevent clipping
+        max_val = np.max(np.abs(final_audio))
+        if max_val > 0:
+            final_audio = final_audio * (32767.0 / max_val) * 0.9  # Leave headroom
+        
+        # Convert to 16-bit integer
+        final_audio = final_audio.astype(np.int16)
+        
+        return final_audio
+    
+    def load_default_song(self):
+        """Load Happy Birthday as default song"""
+        # Happy Birthday melody and chords
+        default_blocks = [
+            # Melody track (Track 0)
+            ChordBlock('G', 0, 0.75, 0),
+            ChordBlock('G', 1, 0.25, 0),
+            ChordBlock('A', 1.5, 1, 0),
+            ChordBlock('G', 2.5, 1, 0),
+            ChordBlock('C', 3.5, 1, 0),
+            ChordBlock('B', 4.5, 2, 0),
+            
+            # Repeat
+            ChordBlock('G', 7, 0.75, 0),
+            ChordBlock('G', 8, 0.25, 0),
+            ChordBlock('A', 8.5, 1, 0),
+            ChordBlock('G', 9.5, 1, 0),
+            ChordBlock('D', 10.5, 1, 0),
+            ChordBlock('C', 11.5, 2, 0),
+            
+            # Harmony track (Track 1) - Bass chords
+            ChordBlock('C', 0, 2, 1),
+            ChordBlock('G', 2, 2, 1),
+            ChordBlock('C', 4, 3, 1),
+            ChordBlock('C', 7, 2, 1),
+            ChordBlock('G', 9, 2, 1),
+            ChordBlock('C', 11, 2, 1),
+        ]
+        
+        for block in default_blocks:
+            self.chord_blocks.append(block)
+            self.draw_chord_block(block)
+        
+        self.root.title("Music Composer - Happy Birthday")
     
     def run(self):
         """Run the application"""

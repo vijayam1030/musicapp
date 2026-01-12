@@ -1,0 +1,54 @@
+{
+  "bpm": 120,
+  "key": "C",
+  "blocks": [
+    {
+      "chord_name": "C",
+      "position": 0,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "G",
+      "position": 2,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "Am",
+      "position": 4,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "F",
+      "position": 6,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "C",
+      "position": 8,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "G",
+      "position": 10,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "Am",
+      "position": 12,
+      "duration": 2,
+      "track": 0
+    },
+    {
+      "chord_name": "F",
+      "position": 14,
+      "duration": 2,
+      "track": 0
+    }
+  ]
+}

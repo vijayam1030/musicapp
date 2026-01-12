@@ -4,13 +4,15 @@ A fast, user-friendly music composition app with drag-and-drop functionality!
 
 ## ✨ Features
 
-- **Pre-defined Chords**: 12 common chords ready to use (C, Dm, Em, F, G, Am, Bdim, Cmaj7, Dm7, Em7, Fmaj7, G7)
-- **Drag & Drop**: Simply click on any chord and drop it on the timeline
-- **Timeline Interface**: Visual timeline with beat markers
-- **Play/Stop Controls**: Listen to your composition instantly
+- **70+ Chords & Notes**: Comprehensive library including major, minor, 7th, diminished, augmented, and sus chords
+- **Multi-Track Support**: Create complex arrangements with up to 8+ simultaneous tracks
+- **Drag & Drop Interface**: Simply click and place chords on the timeline
+- **Save/Load Songs**: Save your compositions and load them later
+- **Default Song**: Happy Birthday loads automatically when you start the app
 - **Adjustable BPM**: Control the tempo (60-200 BPM)
-- **Key Selection**: Choose your musical key
-- **Right-Click to Delete**: Remove chords easily
+- **High-Quality Audio**: Enhanced synthesis with harmonics for rich, piano-like sound
+- **Visual Timeline**: Infinite scrollable timeline with beat markers and track labels
+- **Simultaneous Playback**: Play multiple tracks together for rich harmonies
 
 ## 🚀 Quick Start
 
@@ -27,62 +29,143 @@ pip install -r requirements.txt
 python music_app.py
 ```
 
+The app will open with "Happy Birthday" already loaded!
+
 ## 🎹 How to Use
 
-1. **Start the App**: Run `python music_app.py`
+### Basic Composition
 
-2. **Add Chords**:
-   - Click on any chord from the left panel
-   - Click on the timeline where you want to place it
-   - Each grid cell represents one beat
+1. **Browse Chords**: Scroll through the left panel to see all 70+ available chords
+2. **Place Chords**: Click a chord, then click on the timeline to place it
+3. **Multiple Tracks**: Place chords at different vertical positions for multi-track arrangements
+4. **Adjust Duration**: Click near the right edge of a chord block and drag to change duration
+5. **Delete Chords**: Right-click on any chord to remove it
 
-3. **Play Your Music**:
-   - Click the **▶ Play** button to hear your composition
-   - Click **⬛ Stop** to stop playback
+### Playback Controls
 
-4. **Adjust Settings**:
-   - Change **BPM** to make it faster or slower
-   - Select different **Keys** for different moods
+- **▶ Play**: Play your composition from start to finish
+- **⬛ Stop**: Stop playback immediately
+- **BPM**: Adjust tempo with the spinbox control
 
-5. **Edit**:
-   - Right-click on any chord in the timeline to delete it
-   - Click **🗑 Clear** to start over
+### File Operations
 
-## 🎼 Chord Guide
+- **📄 New**: Create a new empty song
+- **🎵 Export**: Export your composition as a WAV audio file (playable in any music player)
+- **💾 Save**: Save your project as a .json file (to edit later)
+- **📂 Open**: Load a previously saved project
+- **🗑 Clear**: Remove all chords from the timeline
 
-- **Major Chords** (C, F, G): Happy, bright sound
-- **Minor Chords** (Dm, Em, Am): Sad, mellow sound
-- **Diminished** (Bdim): Tense, unstable sound
-- **7th Chords** (Cmaj7, Dm7, Em7, Fmaj7, G7): Rich, jazzy sound
+### Audio Export
 
-## 💡 Tips
+When you click **🎵 Export**, your composition is rendered to a high-quality WAV audio file that you can:
+- Play in any music player (Windows Media Player, VLC, iTunes, etc.)
+- Share with friends
+- Upload to social media
+- Use in videos or other projects
 
-- Start with a simple progression: C → F → G → C
-- Try the popular progression: C → Am → F → G
-- Layer chords at different positions for interesting rhythms
-- Experiment with different BPM values for different feels
+### Project Files
 
-## 🎨 Shortcuts
+When you click **💾 Save**, your project is saved as a JSON file that preserves:
+- All chord positions and durations
+- Track assignments
+- BPM and key settings
+- Everything needed to continue editing later
 
-- **Left Click**: Place chord on timeline
-- **Right Click**: Delete chord from timeline
-- **Play Button**: Start playback
-- **Stop Button**: Stop playback
+### Navigation
+
+- **◄◄ / ►►**: Scroll the timeline left/right
+- **Scrollbar**: Drag to navigate through 200 beats
+- **Shift + Mouse Wheel**: Horizontal scroll with your mouse
+
+## 🎼 Available Chords
+
+### Major Chords
+C, D, E, F, G, A, B, Db, Eb, Gb, Ab, Bb
+
+### Minor Chords  
+Cm, Dm, Em, Fm, Gm, Am, Bm, C#m, Ebm, F#m, Abm, Bbm
+
+### 7th Chords
+C7, D7, E7, F7, G7, A7, B7
+
+### Major 7th Chords
+Cmaj7, Dmaj7, Emaj7, Fmaj7, Gmaj7, Amaj7
+
+### Minor 7th Chords
+Cm7, Dm7, Em7, Fm7, Gm7, Am7
+
+### Diminished Chords
+Cdim, Ddim, Edim, Fdim, Gdim, Adim, Bdim
+
+### Augmented Chords
+Caug, Daug, Eaug, Faug, Gaug, Aaug
+
+### Sus Chords
+Csus2, Csus4, Dsus2, Dsus4, Esus2, Esus4, Fsus2, Fsus4, Gsus2, Gsus4, Asus2, Asus4
+
+## 💡 Tips & Tricks
+
+### Popular Progressions
+- **Pop**: C → G → Am → F
+- **Blues**: C7 → F7 → C7 → G7
+- **Jazz**: Cmaj7 → Dm7 → G7 → Cmaj7
+- **Sad**: Am → F → C → G
+
+### Multi-Track Tips
+- Use Track 1 for melody (single notes/short chords)
+- Use Track 2 for bass line (lower chords)
+- Use Track 3+ for harmony and fills
+- Chords at the same beat position play simultaneously
+
+### Composition Workflow
+1. Start with a bass line on Track 2
+2. Add chord progression on Track 1
+3. Layer melody or fills on Track 3
+4. Adjust BPM to match your style
+5. Save frequently!
+
+## 🎨 Visual Guide
+
+- **Color-coded chords**: Each chord type has its own color family
+  - Major: Warm reds/oranges/yellows
+  - Minor: Cool blues/teals
+  - 7th: Purples/pinks
+  - Diminished: Grays
+  - Augmented: Orange/red
+  - Sus: Yellow/green
 
 ## 🔧 Technical Details
 
 - Built with **tkinter** for GUI
 - Uses **pygame** for audio playback
-- **numpy** for audio synthesis
-- Real-time chord generation using sine wave synthesis
+- **numpy** for enhanced audio synthesis with harmonics
+- Real-time chord generation with rich, piano-like tones
+- Multi-track simultaneous playback support
+- JSON format for song storage
 
-## 📝 Future Enhancements
+## 📁 File Format
 
-- Save/Load compositions
-- More chord types
-- Multiple tracks
-- Export to MIDI/WAV
-- Undo/Redo functionality
+Songs are saved as JSON with this structure:
+```json
+{
+  "bpm": 120,
+  "key": "C",
+  "blocks": [
+    {
+      "chord_name": "C",
+      "position": 0,
+      "duration": 1.0,
+      "track": 0
+    }
+  ]
+}
+```
+
+## 🎯 Keyboard Shortcuts
+
+- **Shift + Mouse Wheel**: Horizontal scroll
+- **Right Click**: Delete chord
+- **Left Click**: Place chord
 
 ---
 
