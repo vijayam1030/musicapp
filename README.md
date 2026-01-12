@@ -5,12 +5,13 @@ A fast, user-friendly music composition app with drag-and-drop functionality!
 ## ✨ Features
 
 - **70+ Chords & Notes**: Comprehensive library including major, minor, 7th, diminished, augmented, and sus chords
+- **6 High-Quality Instruments**: Piano, Guitar, Strings, Organ, Synth, and Bass - each with authentic synthesis
 - **Multi-Track Support**: Create complex arrangements with up to 8+ simultaneous tracks
 - **Drag & Drop Interface**: Simply click and place chords on the timeline
 - **Save/Load Songs**: Save your compositions and load them later
+- **Export as WAV**: Export finished songs as high-quality audio files
 - **Default Song**: Happy Birthday loads automatically when you start the app
 - **Adjustable BPM**: Control the tempo (60-200 BPM)
-- **High-Quality Audio**: Enhanced synthesis with harmonics for rich, piano-like sound
 - **Visual Timeline**: Infinite scrollable timeline with beat markers and track labels
 - **Simultaneous Playback**: Play multiple tracks together for rich harmonies
 
@@ -46,6 +47,17 @@ The app will open with "Happy Birthday" already loaded!
 - **▶ Play**: Play your composition from start to finish
 - **⬛ Stop**: Stop playback immediately
 - **BPM**: Adjust tempo with the spinbox control
+- **Instrument**: Choose from Piano, Guitar, Strings, Organ, Synth, or Bass
+
+### Instruments
+
+Each instrument has unique sound characteristics:
+- **Piano**: Rich harmonics with natural decay, perfect for melodies and chords
+- **Guitar**: Plucked sound with quick attack and gradual decay
+- **Strings**: Smooth, warm sound with slow attack and rich sustain
+- **Organ**: Sustained, powerful sound with strong harmonics
+- **Synth**: Electronic sound with square wave character
+- **Bass**: Deep, punchy sound emphasizing low frequencies
 
 ### File Operations
 

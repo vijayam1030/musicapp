@@ -77,31 +77,89 @@ class ChordGenerator:
             'C4n': ['C4'], 'D4n': ['D4'], 'E4n': ['E4'], 'F4n': ['F4'], 'G4n': ['G4'], 'A4n': ['A4'], 'B4n': ['B4'],
             'C5n': ['C5'], 'D5n': ['D5'], 'E5n': ['E5'], 'F5n': ['F5'], 'G5n': ['G5'], 'A5n': ['A5'], 'B5n': ['B5'],
         }
+        
+        # Current instrument
+        self.current_instrument = 'Piano'
     
-    def generate_tone(self, frequency, duration=1.0, volume=0.3):
-        """Generate a single tone with harmonics for richer sound"""
+    def set_instrument(self, instrument_name):
+        """Set the current instrument"""
+        self.current_instrument = instrument_name
+    
+    def generate_tone(self, frequency, duration=1.0, volume=0.3, instrument='Piano'):
+        """Generate a single tone with instrument-specific synthesis"""
         num_samples = int(self.sample_rate * duration)
         t = np.linspace(0, duration, num_samples, False)
         
-        # Generate fundamental frequency with harmonics for piano-like sound
-        wave = np.sin(2 * np.pi * frequency * t)  # Fundamental
-        wave += 0.5 * np.sin(2 * np.pi * frequency * 2 * t)  # 2nd harmonic
-        wave += 0.3 * np.sin(2 * np.pi * frequency * 3 * t)  # 3rd harmonic
-        wave += 0.15 * np.sin(2 * np.pi * frequency * 4 * t)  # 4th harmonic
-        wave += 0.08 * np.sin(2 * np.pi * frequency * 5 * t)  # 5th harmonic
+        # Generate wave based on instrument type
+        if instrument == 'Piano':
+            # Piano-like sound with strong harmonics
+            wave = np.sin(2 * np.pi * frequency * t)  # Fundamental
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 2 * t)  # 2nd harmonic
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 3 * t)  # 3rd harmonic
+            wave += 0.15 * np.sin(2 * np.pi * frequency * 4 * t)  # 4th harmonic
+            wave += 0.08 * np.sin(2 * np.pi * frequency * 5 * t)  # 5th harmonic
+            wave = wave / 2.03
+            
+        elif instrument == 'Guitar':
+            # Guitar-like sound with plucked characteristics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.4 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.25 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.1 * np.sin(2 * np.pi * frequency * 4 * t)
+            # Add pluck effect
+            pluck_decay = np.exp(-3 * t / duration)
+            wave = wave * pluck_decay
+            wave = wave / 1.75
+            
+        elif instrument == 'Strings':
+            # Smooth string sound with rich harmonics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.6 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.4 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.25 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave += 0.15 * np.sin(2 * np.pi * frequency * 5 * t)
+            wave += 0.1 * np.sin(2 * np.pi * frequency * 6 * t)
+            # Add vibrato for warmth
+            vibrato = 1 + 0.005 * np.sin(2 * np.pi * 5 * t)
+            wave = wave * vibrato
+            wave = wave / 2.5
+            
+        elif instrument == 'Organ':
+            # Organ sound - pure harmonics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.7 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave = wave / 2.5
+            
+        elif instrument == 'Synth':
+            # Synthesizer sound with square wave characteristics
+            wave = np.sign(np.sin(2 * np.pi * frequency * t))  # Square wave
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.2 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave = wave / 1.5
+            # Add filter sweep
+            sweep = 1 - 0.3 * np.exp(-5 * t / duration)
+            wave = wave * sweep
+            
+        elif instrument == 'Bass':
+            # Bass sound - emphasis on low harmonics
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.8 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.4 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave += 0.2 * np.sin(2 * np.pi * frequency * 4 * t)
+            wave = wave / 2.4
+            
+        else:
+            # Default to piano
+            wave = np.sin(2 * np.pi * frequency * t)
+            wave += 0.5 * np.sin(2 * np.pi * frequency * 2 * t)
+            wave += 0.3 * np.sin(2 * np.pi * frequency * 3 * t)
+            wave = wave / 1.8
         
-        # Normalize
-        wave = wave / 2.03
-        
-        # Apply envelope (ADSR - simplified)
-        envelope = self.create_envelope(num_samples)
+        # Apply envelope (ADSR - instrument specific)
+        envelope = self.create_envelope(num_samples, instrument)
         wave = wave * envelope * volume
-        
-        # Add subtle vibrato for warmth
-        vibrato_freq = 5.0  # 5 Hz vibrato
-        vibrato_depth = 0.003  # Very subtle
-        vibrato = 1 + vibrato_depth * np.sin(2 * np.pi * vibrato_freq * t)
-        wave = wave * vibrato
         
         # Convert to 16-bit integers
         wave = (wave * 32767).astype(np.int16)
@@ -113,12 +171,45 @@ class ChordGenerator:
         
         return stereo_wave
     
-    def create_envelope(self, num_samples):
-        """Create an ADSR envelope for more natural sound"""
-        attack = int(num_samples * 0.01)  # 1% quick attack
-        decay = int(num_samples * 0.15)   # 15% decay
-        sustain_level = 0.6
-        release = int(num_samples * 0.4)  # 40% smooth release
+    def create_envelope(self, num_samples, instrument='Piano'):
+        """Create an ADSR envelope for more natural sound based on instrument"""
+        
+        # Different envelope characteristics for each instrument
+        if instrument == 'Piano':
+            attack = int(num_samples * 0.01)
+            decay = int(num_samples * 0.15)
+            sustain_level = 0.6
+            release = int(num_samples * 0.4)
+        elif instrument == 'Guitar':
+            attack = int(num_samples * 0.005)
+            decay = int(num_samples * 0.1)
+            sustain_level = 0.5
+            release = int(num_samples * 0.5)
+        elif instrument == 'Strings':
+            attack = int(num_samples * 0.08)  # Slower attack
+            decay = int(num_samples * 0.1)
+            sustain_level = 0.8
+            release = int(num_samples * 0.3)
+        elif instrument == 'Organ':
+            attack = int(num_samples * 0.02)
+            decay = int(num_samples * 0.05)
+            sustain_level = 0.9  # Strong sustain
+            release = int(num_samples * 0.2)
+        elif instrument == 'Synth':
+            attack = int(num_samples * 0.02)
+            decay = int(num_samples * 0.2)
+            sustain_level = 0.7
+            release = int(num_samples * 0.3)
+        elif instrument == 'Bass':
+            attack = int(num_samples * 0.005)
+            decay = int(num_samples * 0.1)
+            sustain_level = 0.7
+            release = int(num_samples * 0.4)
+        else:
+            attack = int(num_samples * 0.01)
+            decay = int(num_samples * 0.15)
+            sustain_level = 0.6
+            release = int(num_samples * 0.4)
         
         envelope = np.ones(num_samples)
         
@@ -141,7 +232,7 @@ class ChordGenerator:
         
         return envelope
     
-    def generate_chord(self, chord_name, duration=0.8):
+    def generate_chord(self, chord_name, duration=0.8, instrument='Piano'):
         """Generate a chord sound by combining multiple notes"""
         if chord_name not in self.chord_notes:
             # Default to C major if chord not found
@@ -154,7 +245,7 @@ class ChordGenerator:
         for note in notes:
             if note in self.note_frequencies:
                 freq = self.note_frequencies[note]
-                wave = self.generate_tone(freq, duration, volume=0.25)
+                wave = self.generate_tone(freq, duration, volume=0.25, instrument=instrument)
                 chord_waves.append(wave)
         
         # Mix all notes together

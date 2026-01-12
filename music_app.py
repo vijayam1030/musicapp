@@ -159,6 +159,16 @@ class MusicApp:
         key_combo.pack(side=tk.LEFT, padx=5)
         key_combo.bind('<<ComboboxSelected>>', self.update_key)
         
+        # Instrument selector
+        tk.Label(control_frame, text="Instrument:", bg=self.panel_color,
+                fg='white', font=('Arial', 12)).pack(side=tk.LEFT, padx=(30, 5))
+        self.instrument_var = tk.StringVar(value='Piano')
+        instrument_combo = ttk.Combobox(control_frame, textvariable=self.instrument_var,
+                                values=['Piano', 'Guitar', 'Strings', 'Organ', 'Synth', 'Bass'],
+                                width=10, font=('Arial', 12), state='readonly')
+        instrument_combo.pack(side=tk.LEFT, padx=5)
+        instrument_combo.bind('<<ComboboxSelected>>', self.update_instrument)
+        
         # Main content area
         content_frame = tk.Frame(self.root, bg=self.bg_color)
         content_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
@@ -453,6 +463,11 @@ class MusicApp:
         """Update musical key"""
         self.current_key = self.key_var.get()
     
+    def update_instrument(self, event):
+        """Update instrument"""
+        instrument = self.instrument_var.get()
+        self.chord_generator.set_instrument(instrument)
+    
     def toggle_repeat(self):
         """Toggle repeat mode"""
         self.repeat_mode = not self.repeat_mode
@@ -509,9 +524,11 @@ class MusicApp:
                 scheduled_sounds = []
                 for block in sorted_blocks:
                     start_time_ms = int(block.position * beat_duration * 1000)
+                    instrument = self.instrument_var.get() if hasattr(self, 'instrument_var') else 'Piano'
                     sound = self.chord_generator.generate_chord(
                         block.chord_name, 
-                        duration=block.duration * beat_duration
+                        duration=block.duration * beat_duration,
+                        instrument=instrument
                     )
                     scheduled_sounds.append((start_time_ms, sound))
                 
@@ -717,7 +734,8 @@ class MusicApp:
             for block in blocks_at_position:
                 # Generate chord audio
                 chord_duration = block.duration * beat_duration
-                sound = self.chord_generator.generate_chord(block.chord_name, duration=chord_duration)
+                instrument = self.instrument_var.get() if hasattr(self, 'instrument_var') else 'Piano'
+                sound = self.chord_generator.generate_chord(block.chord_name, duration=chord_duration, instrument=instrument)
                 
                 # Convert pygame sound to numpy array
                 sound_array = pygame.sndarray.array(sound)
