@@ -2,6 +2,10 @@
 class MusicApp {
     constructor() {
         this.canvas = document.getElementById('timeline');
+        if (!this.canvas) {
+            console.error('Canvas element not found!');
+            return;
+        }
         this.ctx = this.canvas.getContext('2d');
         this.chordBlocks = [];
         this.draggingChord = null;
@@ -12,12 +16,15 @@ class MusicApp {
         this.beatWidth = 80;
         this.trackHeight = 60;
         this.headerHeight = 25;
-        this.timelineBeats = 500;
+        this.timelineBeats = 200; // start smaller to ensure canvas renders
         this.scrollX = 0;
         this.scrollY = 0;
+
         this.resizingBlock = null;
         this.resizeStartX = 0;
         this.resizeOriginalDuration = 0;
+        this.resizeOriginalPosition = 0;
+        this.resizingLeft = false;
         this.draggingBlock = null;
         this.dragStartX = 0;
         this.dragStartY = 0;
@@ -30,6 +37,7 @@ class MusicApp {
         this.maxHistory = 50;
         this.lastMouseX = 0;
         this.lastMouseY = 0;
+        this.currentOctave = 4;
         
         this.initUI();
         this.initCanvas();
@@ -37,9 +45,124 @@ class MusicApp {
     }
 
     initUI() {
-        // Chord sections
+        // Populate chord palette
+        this.updateChordPalette();
+        
+        // Octave selector
+        const octaveSelect = document.getElementById('octaveSelect');
+        if (octaveSelect) {
+            octaveSelect.addEventListener('change', (e) => {
+                this.currentOctave = parseInt(e.target.value);
+                this.updateChordPalette();
+            });
+        }
+
+        // Song selector
+        const songSelect = document.getElementById('songSelect');
+        if (songSelect) {
+            songSelect.addEventListener('change', (e) => {
+                const songIndex = parseInt(e.target.value);
+                this.loadDefaultSong(songIndex);
+            });
+        }
+
+        // Button event listeners
+        document.getElementById('playBtn').addEventListener('click', () => this.play());
+        document.getElementById('stopBtn').addEventListener('click', () => this.stop());
+        document.getElementById('repeatBtn').addEventListener('click', () => this.toggleRepeat());
+        document.getElementById('newBtn').addEventListener('click', () => this.newSong());
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportWAV());
+        document.getElementById('saveBtn').addEventListener('click', () => this.saveProject());
+        document.getElementById('loadBtn').addEventListener('click', () => this.loadProject());
+        document.getElementById('clearBtn').addEventListener('click', () => this.clear());
+        document.getElementById('scrollLeft').addEventListener('click', () => this.scroll(-500));
+        document.getElementById('scrollRight').addEventListener('click', () => this.scroll(500));
+        document.getElementById('trackHeightPlus').addEventListener('click', () => this.adjustTrackHeight(10));
+        document.getElementById('trackHeightMinus').addEventListener('click', () => this.adjustTrackHeight(-10));
+        document.getElementById('beatWidthPlus').addEventListener('click', () => this.adjustBeatWidth(10));
+        document.getElementById('beatWidthMinus').addEventListener('click', () => this.adjustBeatWidth(-10));
+        // Note: AI button is handled by ai-generator.js
+        
+        // Mouse wheel horizontal scrolling on timeline
+        const timelineWrapper = document.querySelector('.timeline-wrapper');
+        if (timelineWrapper) {
+            timelineWrapper.addEventListener('wheel', (e) => {
+                if (e.shiftKey) {
+                    // Shift + wheel = horizontal scroll
+                    e.preventDefault();
+                    timelineWrapper.scrollLeft += e.deltaY;
+                } else if (Math.abs(e.deltaX) > 0) {
+                    // Trackpad horizontal scroll
+                    e.preventDefault();
+                    timelineWrapper.scrollLeft += e.deltaX;
+                } else {
+                    // Normal wheel = horizontal scroll
+                    e.preventDefault();
+                    timelineWrapper.scrollLeft += e.deltaY;
+                }
+            }, { passive: false });
+        }
+        
+        // Keyboard event for Delete key
+        document.addEventListener('keydown', (e) => this.onKeyDown(e));
+
+        // Controls
+        document.getElementById('bpmInput').addEventListener('change', (e) => {
+            this.bpm = parseInt(e.target.value);
+        });
+        document.getElementById('instrumentSelect').addEventListener('change', (e) => {
+            window.audioEngine.setInstrument(e.target.value);
+        });
+
+        // Canvas events
+        this.canvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            
+            // Auto-scroll when dragging near edges
+            const wrapper = this.canvas.parentElement;
+            if (wrapper) {
+                const rect = wrapper.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const wrapperWidth = wrapper.clientWidth;
+                
+                // Scroll right when within 100px of right edge
+                if (mouseX > wrapperWidth - 100) {
+                    wrapper.scrollLeft += 15;
+                }
+                // Scroll left when within 100px of left edge
+                if (mouseX < 100 && wrapper.scrollLeft > 0) {
+                    wrapper.scrollLeft -= 15;
+                }
+            }
+        });
+        this.canvas.addEventListener('drop', (e) => this.onDrop(e));
+        this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
+        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+        this.canvas.addEventListener('mouseleave', (e) => this.onMouseUp(e));
+        this.canvas.parentElement.addEventListener('scroll', () => this.drawTimeline());
+    }
+
+    updateChordPalette() {
+        const chordList = document.getElementById('chordList');
+        chordList.innerHTML = ''; // Clear existing
+        
+        // Generate notes for current octave
+        const octave = this.currentOctave;
+        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const singleNotes = notes.map(note => `${note}${octave}n`);
+        
+        // Also include notes from adjacent octaves for continuity
+        const prevOctave = octave - 1;
+        const nextOctave = octave + 1;
+        const prevNotes = prevOctave >= 0 ? notes.slice(6).map(note => `${note}${prevOctave}n`) : [];
+        const nextNotes = nextOctave <= 8 ? notes.slice(0, 6).map(note => `${note}${nextOctave}n`) : [];
+        
+        const allSingleNotes = [...prevNotes, ...singleNotes, ...nextNotes];
+        
         const chordSections = [
-            { name: 'SINGLE NOTES', chords: ['C4n', 'C#4n', 'D4n', 'D#4n', 'E4n', 'F4n', 'F#4n', 'G4n', 'G#4n', 'A4n', 'A#4n', 'B4n', 'C5n', 'C#5n', 'D5n', 'D#5n', 'E5n', 'F5n', 'F#5n', 'G5n', 'G#5n', 'A5n', 'A#5n', 'B5n'] },
+            { name: `SINGLE NOTES (Octave ${octave})`, chords: allSingleNotes },
             { name: 'MAJOR CHORDS', chords: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'Db', 'Eb', 'Gb', 'Ab', 'Bb'] },
             { name: 'MINOR CHORDS', chords: ['Cm', 'Dm', 'Em', 'Fm', 'Gm', 'Am', 'Bm', 'C#m', 'Ebm', 'F#m', 'Abm', 'Bbm'] },
             { name: 'DOMINANT 7TH', chords: ['C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'B7', 'Bb7', 'Eb7', 'Ab7'] },
@@ -54,7 +177,6 @@ class MusicApp {
             { name: 'AUGMENTED', chords: ['Caug', 'Daug', 'Eaug', 'Faug', 'Gaug', 'Aaug'] }
         ];
 
-        const chordList = document.getElementById('chordList');
         chordSections.forEach(section => {
             const header = document.createElement('div');
             header.className = 'chord-section-header';
@@ -74,49 +196,14 @@ class MusicApp {
                 chordList.appendChild(btn);
             });
         });
-
-        // Button event listeners
-        document.getElementById('playBtn').addEventListener('click', () => this.play());
-        document.getElementById('stopBtn').addEventListener('click', () => this.stop());
-        document.getElementById('repeatBtn').addEventListener('click', () => this.toggleRepeat());
-        document.getElementById('newBtn').addEventListener('click', () => this.newSong());
-        document.getElementById('exportBtn').addEventListener('click', () => this.exportWAV());
-        document.getElementById('saveBtn').addEventListener('click', () => this.saveProject());
-        document.getElementById('loadBtn').addEventListener('click', () => this.loadProject());
-        document.getElementById('clearBtn').addEventListener('click', () => this.clear());
-        document.getElementById('scrollLeft').addEventListener('click', () => this.scroll(-200));
-        document.getElementById('scrollRight').addEventListener('click', () => this.scroll(200));
-        document.getElementById('trackHeightPlus').addEventListener('click', () => this.adjustTrackHeight(10));
-        document.getElementById('trackHeightMinus').addEventListener('click', () => this.adjustTrackHeight(-10));
-        document.getElementById('beatWidthPlus').addEventListener('click', () => this.adjustBeatWidth(10));
-        document.getElementById('beatWidthMinus').addEventListener('click', () => this.adjustBeatWidth(-10));
-        // Note: AI button is handled by ai-generator.js
-        
-        // Keyboard event for Delete key
-        document.addEventListener('keydown', (e) => this.onKeyDown(e));
-
-        // Controls
-        document.getElementById('bpmInput').addEventListener('change', (e) => {
-            this.bpm = parseInt(e.target.value);
-        });
-        document.getElementById('instrumentSelect').addEventListener('change', (e) => {
-            window.audioEngine.setInstrument(e.target.value);
-        });
-
-        // Canvas events
-        this.canvas.addEventListener('dragover', (e) => e.preventDefault());
-        this.canvas.addEventListener('drop', (e) => this.onDrop(e));
-        this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
-        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
-        this.canvas.addEventListener('mouseleave', (e) => this.onMouseUp(e));
-        this.canvas.parentElement.addEventListener('scroll', () => this.drawTimeline());
     }
 
     initCanvas() {
-        this.canvas.width = this.timelineBeats * this.beatWidth;
+        const newWidth = this.timelineBeats * this.beatWidth;
+        this.canvas.width = newWidth;
         this.canvas.height = 600;
+        this.canvas.style.width = newWidth + 'px';
+        this.canvas.style.height = '600px';
         this.drawTimeline();
     }
 
@@ -242,11 +329,33 @@ class MusicApp {
             const bw = block.duration * this.beatWidth - 4;
             const bh = this.trackHeight - 10;
 
-            // Check if clicking within 10px of right edge
+            // Check if clicking within 10px of left edge (resize from left)
+            if (x >= bx - 10 && x <= bx + 10 && y >= by && y <= by + bh) {
+                this.resizingBlock = block;
+                this.resizeStartX = x;
+                this.resizeOriginalDuration = block.duration;
+                this.resizeOriginalPosition = block.position;
+                this.resizingLeft = true;
+                this.canvas.style.cursor = 'ew-resize';
+                
+                if (!this.selectedBlocks.includes(block)) {
+                    if (e.ctrlKey) {
+                        this.selectedBlocks.push(block);
+                    } else {
+                        this.selectedBlocks = [block];
+                    }
+                }
+                this.drawTimeline();
+                return;
+            }
+
+            // Check if clicking within 10px of right edge (resize from right)
             if (x >= bx + bw - 10 && x <= bx + bw + 10 && y >= by && y <= by + bh) {
                 this.resizingBlock = block;
                 this.resizeStartX = x;
                 this.resizeOriginalDuration = block.duration;
+                this.resizeOriginalPosition = block.position;
+                this.resizingLeft = false;
                 this.canvas.style.cursor = 'ew-resize';
                 
                 // Add to selection if not already selected
@@ -316,15 +425,20 @@ class MusicApp {
             this.draggingBlock.track = Math.max(0, this.dragOriginalTrack + deltaTrack);
             
             // Auto-scroll when dragging near edges
+            // Auto-scroll timeline while dragging near viewport edges
             const wrapper = this.canvas.parentElement;
             if (wrapper) {
-                const mouseX = e.clientX - rect.left;
-                if (mouseX > wrapper.clientWidth - 100) {
-                    wrapper.scrollLeft += 15;
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const mouseXInWrapper = e.clientX - wrapperRect.left;
+                const scrollStep = 18;
+                if (mouseXInWrapper > wrapperRect.width - 80) {
+                    wrapper.scrollLeft += scrollStep;
+                } else if (mouseXInWrapper < 80 && wrapper.scrollLeft > 0) {
+                    wrapper.scrollLeft -= scrollStep;
                 }
-                if (mouseX < 100 && wrapper.scrollLeft > 0) {
-                    wrapper.scrollLeft -= 15;
-                }
+                // Keep internal scroll trackers in sync so hit-testing stays accurate
+                this.scrollX = wrapper.scrollLeft;
+                this.scrollY = wrapper.scrollTop;
             }
             
             this.canvas.style.cursor = 'move';
@@ -338,23 +452,34 @@ class MusicApp {
             const deltaX = x - this.resizeStartX;
             // Snap to quarter beats
             const deltaBeat = Math.round(deltaX / this.beatWidth * 4) / 4;
-            const newDuration = Math.max(0.25, this.resizeOriginalDuration + deltaBeat);
-            this.resizingBlock.duration = newDuration;
+            
+            if (this.resizingLeft) {
+                // Resizing from left edge - adjust position and duration
+                const newPosition = Math.max(0, this.resizeOriginalPosition + deltaBeat);
+                const actualDelta = newPosition - this.resizeOriginalPosition;
+                const newDuration = Math.max(0.25, this.resizeOriginalDuration - actualDelta);
+                this.resizingBlock.position = newPosition;
+                this.resizingBlock.duration = newDuration;
+            } else {
+                // Resizing from right edge - only adjust duration
+                const newDuration = Math.max(0.25, this.resizeOriginalDuration + deltaBeat);
+                this.resizingBlock.duration = newDuration;
+            }
             
             // Auto-scroll when dragging near the right edge
+            // Auto-scroll timeline while resizing near edges
             const wrapper = this.canvas.parentElement;
             if (wrapper) {
-                const mouseX = e.clientX - rect.left;
-                const wrapperWidth = wrapper.clientWidth;
-                
-                // Scroll right when within 100px of right edge
-                if (mouseX > wrapperWidth - 100) {
-                    wrapper.scrollLeft += 15;
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const mouseXInWrapper = e.clientX - wrapperRect.left;
+                const scrollStep = 18;
+                if (mouseXInWrapper > wrapperRect.width - 80) {
+                    wrapper.scrollLeft += scrollStep;
+                } else if (mouseXInWrapper < 80 && wrapper.scrollLeft > 0) {
+                    wrapper.scrollLeft -= scrollStep;
                 }
-                // Scroll left when within 100px of left edge  
-                if (mouseX < 100 && wrapper.scrollLeft > 0) {
-                    wrapper.scrollLeft -= 15;
-                }
+                this.scrollX = wrapper.scrollLeft;
+                this.scrollY = wrapper.scrollTop;
             }
             
             // Expand timeline if needed
@@ -371,7 +496,9 @@ class MusicApp {
             const bw = block.duration * this.beatWidth - 4;
             const bh = this.trackHeight - 10;
 
-            if (x >= bx + bw - 10 && x <= bx + bw + 10 && y >= by && y <= by + bh) {
+            // Check left or right edge
+            if ((x >= bx - 10 && x <= bx + 10 && y >= by && y <= by + bh) ||
+                (x >= bx + bw - 10 && x <= bx + bw + 10 && y >= by && y <= by + bh)) {
                 onResizeHandle = true;
                 break;
             }
@@ -391,6 +518,7 @@ class MusicApp {
         
         if (this.resizingBlock) {
             this.resizingBlock = null;
+            this.resizingLeft = false;
             this.canvas.style.cursor = 'crosshair';
             this.expandTimelineIfNeeded();
             this.drawTimeline();
@@ -426,7 +554,7 @@ class MusicApp {
             this.chordBlocks.push({
                 chord: this.draggingChord,
                 position: beat,
-                duration: 0.25,
+                duration: 1,
                 track: track
             });
         }
@@ -606,16 +734,15 @@ class MusicApp {
 
     scroll(amount) {
         const wrapper = this.canvas.parentElement;
-        if (wrapper) {
-            wrapper.scrollLeft += amount;
-            wrapper.scrollTo({
-                left: wrapper.scrollLeft,
-                behavior: 'smooth'
-            });
-            console.log('Scrolling by', amount, 'new position:', wrapper.scrollLeft);
-        } else {
-            console.error('Timeline wrapper not found');
-        }
+        if (!wrapper) return;
+
+        const maxScroll = Math.max(0, this.canvas.width - wrapper.clientWidth);
+        wrapper.scrollLeft = Math.min(maxScroll, Math.max(0, wrapper.scrollLeft + amount));
+
+        // Keep internal scroll positions accurate and redraw for consistent hit-testing
+        this.scrollX = wrapper.scrollLeft;
+        this.scrollY = wrapper.scrollTop;
+        this.drawTimeline();
     }
 
     adjustTrackHeight(change) {
@@ -772,9 +899,9 @@ class MusicApp {
             }
         }
         
-        // If any block is within 50 beats of the end, expand by 200 beats
-        if (maxPosition > this.timelineBeats - 50) {
-            this.timelineBeats = Math.ceil(maxPosition / 100) * 100 + 200;
+        // If any block is within 100 beats of the end, expand by 500 beats
+        if (maxPosition > this.timelineBeats - 100) {
+            this.timelineBeats = Math.ceil(maxPosition / 100) * 100 + 500;
             this.initCanvas();
             console.log('Timeline expanded to', this.timelineBeats, 'beats');
         }
@@ -824,28 +951,265 @@ class MusicApp {
         alert('WAV export requires server-side processing. For now, you can record your browser audio using screen recording software!');
     }
 
-    loadDefaultSong() {
-        // Happy Birthday
-        this.chordBlocks = [
-            { chord: 'G4n', position: 0, duration: 0.5, track: 0 },
-            { chord: 'G4n', position: 0.5, duration: 0.5, track: 0 },
-            { chord: 'A4n', position: 1, duration: 1, track: 0 },
-            { chord: 'G4n', position: 2, duration: 1, track: 0 },
-            { chord: 'C5n', position: 3, duration: 1, track: 0 },
-            { chord: 'B4n', position: 4, duration: 2, track: 0 },
-            { chord: 'G4n', position: 6, duration: 0.5, track: 0 },
-            { chord: 'G4n', position: 6.5, duration: 0.5, track: 0 },
-            { chord: 'A4n', position: 7, duration: 1, track: 0 },
-            { chord: 'G4n', position: 8, duration: 1, track: 0 },
-            { chord: 'D5n', position: 9, duration: 1, track: 0 },
-            { chord: 'C5n', position: 10, duration: 2, track: 0 },
-            { chord: 'C', position: 0, duration: 2, track: 1 },
-            { chord: 'F', position: 2, duration: 2, track: 1 },
-            { chord: 'C', position: 4, duration: 2, track: 1 },
-            { chord: 'G7', position: 6, duration: 2, track: 1 },
-            { chord: 'C', position: 8, duration: 4, track: 1 }
-        ];
+    loadDefaultSong(songIndex = -1) {
+        // Load a specific song or random if songIndex is -1
+        const songs = this.getDefaultSongs();
+        let selectedIndex;
+        
+        if (songIndex === -1) {
+            selectedIndex = Math.floor(Math.random() * songs.length);
+        } else {
+            selectedIndex = songIndex;
+        }
+        
+        const selectedSong = songs[selectedIndex];
+        this.chordBlocks = selectedSong.blocks;
+        console.log('Loaded default song:', selectedSong.name);
         this.drawTimeline();
+    }
+
+    getDefaultSongs() {
+        return [
+            // 1. Twinkle Twinkle Little Star
+            {
+                name: "Twinkle Twinkle Little Star",
+                blocks: [
+                    { chord: 'C4n', position: 0, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 1, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 2, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 3, duration: 1, track: 0 },
+                    { chord: 'A4n', position: 4, duration: 1, track: 0 },
+                    { chord: 'A4n', position: 5, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'F4n', position: 8, duration: 1, track: 0 },
+                    { chord: 'F4n', position: 9, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 10, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 11, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 12, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 13, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'F', position: 4, duration: 4, track: 1 },
+                    { chord: 'C', position: 8, duration: 4, track: 1 },
+                    { chord: 'G', position: 12, duration: 2, track: 1 },
+                    { chord: 'C', position: 14, duration: 2, track: 1 }
+                ]
+            },
+            // 2. Happy Birthday (corrected)
+            {
+                name: "Happy Birthday",
+                blocks: [
+                    { chord: 'G4n', position: 0, duration: 0.75, track: 0 },
+                    { chord: 'G4n', position: 0.75, duration: 0.25, track: 0 },
+                    { chord: 'A4n', position: 1, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 2, duration: 1, track: 0 },
+                    { chord: 'C5n', position: 3, duration: 1, track: 0 },
+                    { chord: 'B4n', position: 4, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 6, duration: 0.75, track: 0 },
+                    { chord: 'G4n', position: 6.75, duration: 0.25, track: 0 },
+                    { chord: 'A4n', position: 7, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 8, duration: 1, track: 0 },
+                    { chord: 'D5n', position: 9, duration: 1, track: 0 },
+                    { chord: 'C5n', position: 10, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 3, track: 1 },
+                    { chord: 'F', position: 3, duration: 3, track: 1 },
+                    { chord: 'C', position: 6, duration: 3, track: 1 },
+                    { chord: 'G', position: 9, duration: 3, track: 1 }
+                ]
+            },
+            // 3. Mary Had a Little Lamb
+            {
+                name: "Mary Had a Little Lamb",
+                blocks: [
+                    { chord: 'E4n', position: 0, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 1, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 2, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 3, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 4, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 5, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'D4n', position: 8, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 9, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'E4n', position: 12, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 13, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'G', position: 4, duration: 4, track: 1 },
+                    { chord: 'C', position: 8, duration: 8, track: 1 }
+                ]
+            },
+            // 4. Jingle Bells (Chorus)
+            {
+                name: "Jingle Bells",
+                blocks: [
+                    { chord: 'E4n', position: 0, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 1, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'E4n', position: 4, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 5, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'E4n', position: 8, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 9, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 10, duration: 1.5, track: 0 },
+                    { chord: 'D4n', position: 11.5, duration: 0.5, track: 0 },
+                    { chord: 'E4n', position: 12, duration: 4, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'C', position: 4, duration: 4, track: 1 },
+                    { chord: 'G', position: 8, duration: 2, track: 1 },
+                    { chord: 'C', position: 10, duration: 6, track: 1 }
+                ]
+            },
+            // 5. Ode to Joy
+            {
+                name: "Ode to Joy",
+                blocks: [
+                    { chord: 'E4n', position: 0, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 1, duration: 1, track: 0 },
+                    { chord: 'F4n', position: 2, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 3, duration: 1, track: 0 },
+                    { chord: 'G4n', position: 4, duration: 1, track: 0 },
+                    { chord: 'F4n', position: 5, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 6, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 7, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 8, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 9, duration: 1, track: 0 },
+                    { chord: 'D4n', position: 10, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 11, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 12, duration: 1.5, track: 0 },
+                    { chord: 'D4n', position: 13.5, duration: 0.5, track: 0 },
+                    { chord: 'D4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'G', position: 4, duration: 4, track: 1 },
+                    { chord: 'Am', position: 8, duration: 4, track: 1 },
+                    { chord: 'G', position: 12, duration: 4, track: 1 }
+                ]
+            },
+            // 6. Für Elise (Opening)
+            {
+                name: "Für Elise",
+                blocks: [
+                    { chord: 'E5n', position: 0, duration: 0.5, track: 0 },
+                    { chord: 'D#5n', position: 0.5, duration: 0.5, track: 0 },
+                    { chord: 'E5n', position: 1, duration: 0.5, track: 0 },
+                    { chord: 'D#5n', position: 1.5, duration: 0.5, track: 0 },
+                    { chord: 'E5n', position: 2, duration: 0.5, track: 0 },
+                    { chord: 'B4n', position: 2.5, duration: 0.5, track: 0 },
+                    { chord: 'D5n', position: 3, duration: 0.5, track: 0 },
+                    { chord: 'C5n', position: 3.5, duration: 0.5, track: 0 },
+                    { chord: 'A4n', position: 4, duration: 1.5, track: 0 },
+                    { chord: 'C4n', position: 5.5, duration: 0.5, track: 0 },
+                    { chord: 'E4n', position: 6, duration: 0.5, track: 0 },
+                    { chord: 'A4n', position: 6.5, duration: 0.5, track: 0 },
+                    { chord: 'B4n', position: 7, duration: 1.5, track: 0 },
+                    { chord: 'Am', position: 0, duration: 4, track: 1 },
+                    { chord: 'E', position: 4, duration: 2, track: 1 },
+                    { chord: 'Am', position: 6, duration: 2, track: 1 }
+                ]
+            },
+            // 7. Canon in D (Pachelbel)
+            {
+                name: "Canon in D",
+                blocks: [
+                    { chord: 'D4n', position: 0, duration: 2, track: 0 },
+                    { chord: 'F#4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 4, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'D4n', position: 8, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'F#4n', position: 12, duration: 2, track: 0 },
+                    { chord: 'E4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'D', position: 0, duration: 2, track: 1 },
+                    { chord: 'A', position: 2, duration: 2, track: 1 },
+                    { chord: 'Bm', position: 4, duration: 2, track: 1 },
+                    { chord: 'F#m', position: 6, duration: 2, track: 1 },
+                    { chord: 'G', position: 8, duration: 2, track: 1 },
+                    { chord: 'D', position: 10, duration: 2, track: 1 },
+                    { chord: 'G', position: 12, duration: 2, track: 1 },
+                    { chord: 'A', position: 14, duration: 2, track: 1 }
+                ]
+            },
+            // 8. Amazing Grace
+            {
+                name: "Amazing Grace",
+                blocks: [
+                    { chord: 'G4n', position: 0, duration: 1.5, track: 0 },
+                    { chord: 'C5n', position: 1.5, duration: 0.5, track: 0 },
+                    { chord: 'C5n', position: 2, duration: 1, track: 0 },
+                    { chord: 'E5n', position: 3, duration: 1, track: 0 },
+                    { chord: 'C5n', position: 4, duration: 1, track: 0 },
+                    { chord: 'E5n', position: 5, duration: 1, track: 0 },
+                    { chord: 'D5n', position: 6, duration: 2, track: 0 },
+                    { chord: 'B4n', position: 8, duration: 1.5, track: 0 },
+                    { chord: 'G4n', position: 9.5, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 10, duration: 1, track: 0 },
+                    { chord: 'C5n', position: 11, duration: 1, track: 0 },
+                    { chord: 'C5n', position: 12, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'Am', position: 4, duration: 2, track: 1 },
+                    { chord: 'G', position: 6, duration: 2, track: 1 },
+                    { chord: 'G', position: 8, duration: 4, track: 1 },
+                    { chord: 'C', position: 12, duration: 2, track: 1 }
+                ]
+            },
+            // 9. Row Row Row Your Boat
+            {
+                name: "Row Row Row Your Boat",
+                blocks: [
+                    { chord: 'C4n', position: 0, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 1, duration: 1, track: 0 },
+                    { chord: 'C4n', position: 2, duration: 0.75, track: 0 },
+                    { chord: 'D4n', position: 2.75, duration: 0.25, track: 0 },
+                    { chord: 'E4n', position: 3, duration: 1, track: 0 },
+                    { chord: 'E4n', position: 4, duration: 0.75, track: 0 },
+                    { chord: 'D4n', position: 4.75, duration: 0.25, track: 0 },
+                    { chord: 'E4n', position: 5, duration: 0.75, track: 0 },
+                    { chord: 'F4n', position: 5.75, duration: 0.25, track: 0 },
+                    { chord: 'G4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'C5n', position: 8, duration: 0.5, track: 0 },
+                    { chord: 'C5n', position: 8.5, duration: 0.5, track: 0 },
+                    { chord: 'C5n', position: 9, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 9.5, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 10, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 10.5, duration: 0.5, track: 0 },
+                    { chord: 'E4n', position: 11, duration: 0.5, track: 0 },
+                    { chord: 'E4n', position: 11.5, duration: 0.5, track: 0 },
+                    { chord: 'E4n', position: 12, duration: 0.5, track: 0 },
+                    { chord: 'C4n', position: 12.5, duration: 0.5, track: 0 },
+                    { chord: 'C4n', position: 13, duration: 0.5, track: 0 },
+                    { chord: 'C4n', position: 13.5, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 14, duration: 0.75, track: 0 },
+                    { chord: 'F4n', position: 14.75, duration: 0.25, track: 0 },
+                    { chord: 'E4n', position: 15, duration: 0.75, track: 0 },
+                    { chord: 'D4n', position: 15.75, duration: 0.25, track: 0 },
+                    { chord: 'C4n', position: 16, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'C', position: 4, duration: 4, track: 1 },
+                    { chord: 'G', position: 8, duration: 4, track: 1 },
+                    { chord: 'C', position: 12, duration: 6, track: 1 }
+                ]
+            },
+            // 10. When the Saints Go Marching In
+            {
+                name: "When the Saints Go Marching In",
+                blocks: [
+                    { chord: 'C4n', position: 0, duration: 1.5, track: 0 },
+                    { chord: 'E4n', position: 1.5, duration: 0.5, track: 0 },
+                    { chord: 'F4n', position: 2, duration: 1.5, track: 0 },
+                    { chord: 'G4n', position: 3.5, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 4, duration: 4, track: 0 },
+                    { chord: 'C4n', position: 8, duration: 1.5, track: 0 },
+                    { chord: 'E4n', position: 9.5, duration: 0.5, track: 0 },
+                    { chord: 'F4n', position: 10, duration: 1.5, track: 0 },
+                    { chord: 'G4n', position: 11.5, duration: 0.5, track: 0 },
+                    { chord: 'G4n', position: 12, duration: 4, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 },
+                    { chord: 'F', position: 4, duration: 4, track: 1 },
+                    { chord: 'C', position: 8, duration: 4, track: 1 },
+                    { chord: 'G7', position: 12, duration: 4, track: 1 }
+                ]
+            }
+        ];
     }
 
     getChordColor(chord) {

@@ -9,6 +9,7 @@ body {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: #fff;
     min-height: 100vh;
+    overflow: visible;
 }
 
 .container {
@@ -16,6 +17,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: visible;
 }
 
 header {
@@ -151,7 +153,7 @@ header p {
     display: flex;
     gap: 15px;
     padding: 15px;
-    overflow: hidden;
+    overflow: visible;
     min-height: 0;
     height: calc(100vh - 250px);
 }
@@ -198,25 +200,17 @@ header p {
     border: 2px solid rgba(255, 215, 0, 0.4);
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3)
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: bold;
-    color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     cursor: grab;
     transition: all 0.2s;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-    text-align: center;
     min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3), rgba(41, 128, 185, 0.3))
-    align-items: center;
-    justify-content: center;
 }
+
+.chord-btn {
     user-select: none;
 }
 
@@ -224,11 +218,11 @@ header p {
     cursor: grabbing;
 }
 
-.chord-btn:hover {8);
+.chord-btn:hover {
     box-shadow: 0 5px 12px rgba(76, 175, 80, 0.5);
     border-color: rgba(76, 175, 80, 0.6);
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.5), rgba(41, 128, 185, 0.5)
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.5), rgba(41, 128, 185, 0.5));
+    transition: all 0.2s;
 }
 
 /* Timeline */
@@ -239,7 +233,11 @@ header p {
     padding: 15px;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    overflow: visible;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    overflow: visible;
+    min-width: 0;
 }
 
 .timeline-container h3 {
@@ -249,18 +247,52 @@ header p {
 }
 
 .timeline-wrapper {
-    flex: 1;
     background: #1a1a1a;
     border-radius: 5px;
-    overflow-x: auto;
+    overflow-x: scroll;
     overflow-y: auto;
     position: relative;
-    max-height: calc(100vh - 350px);
+    height: 630px;
+    width: 100%;
+    max-width: 100%;
+    contain: strict;
+}
+
+.timeline-wrapper::-webkit-scrollbar {
+    height: 20px;
+    width: 14px;
+}
+
+.timeline-wrapper::-webkit-scrollbar-track {
+    background: #0d0d0d;
+    border: 2px solid #333;
+    border-radius: 10px;
+}
+
+.timeline-wrapper::-webkit-scrollbar-thumb {
+    background: #4CAF50;
+    border-radius: 10px;
+    border: 2px solid #0d0d0d;
+    min-width: 100px;
+}
+
+.timeline-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #66BB6A;
+    cursor: grab;
+}
+
+.timeline-wrapper::-webkit-scrollbar-thumb:active {
+    background: #81C784;
+    cursor: grabbing;
 }
 
 #timeline {
     display: block;
     cursor: crosshair;
+    max-width: none;
+    width: auto;
+    flex-shrink: 0;
+    image-rendering: pixelated;
 }
 
 .timeline-controls {

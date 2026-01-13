@@ -53,8 +53,21 @@
                         <option value="Violin">Violin</option>
                         <option value="Cello">Cello</option>
                     </select>
-                </label>
-                <label style="margin-left: 20px;">Track Height:
+                </label>                <label>Default Songs: 
+                    <select id="songSelect">
+                        <option value="-1">Random Song</option>
+                        <option value="0">Twinkle Twinkle Little Star</option>
+                        <option value="1">Happy Birthday</option>
+                        <option value="2">Mary Had a Little Lamb</option>
+                        <option value="3">Jingle Bells</option>
+                        <option value="4">Ode to Joy</option>
+                        <option value="5">Für Elise</option>
+                        <option value="6">Canon in D</option>
+                        <option value="7">Amazing Grace</option>
+                        <option value="8">Row Row Row Your Boat</option>
+                        <option value="9">When the Saints Go Marching In</option>
+                    </select>
+                </label>                <label style="margin-left: 20px;">Track Height:
                     <button id="trackHeightMinus" class="btn" style="padding: 8px 12px; margin: 0 5px;">−</button>
                     <span id="trackHeightDisplay" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">60</span>
                     <button id="trackHeightPlus" class="btn" style="padding: 8px 12px; margin: 0 5px;">+</button>
@@ -71,15 +84,27 @@
         <div class="main-content">
             <!-- Chord Palette -->
             <div class="chord-palette">
-                <h3>Chords</h3>
+                <h3>Notes & Chords</h3>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <label style="color: #4CAF50; font-weight: bold;">Octave:
+                        <select id="octaveSelect" style="padding: 5px; border-radius: 4px; border: 2px solid #4CAF50; background: #2c3e50; color: white; font-weight: bold;">
+                            <option value="2">2 (Low)</option>
+                            <option value="3">3 (Mid-Low)</option>
+                            <option value="4" selected>4 (Middle)</option>
+                            <option value="5">5 (Mid-High)</option>
+                            <option value="6">6 (High)</option>
+                            <option value="7">7 (Very High)</option>
+                        </select>
+                    </label>
+                </div>
                 <div id="chordList" class="chord-list"></div>
             </div>
 
             <!-- Timeline -->
             <div class="timeline-container">
                 <h3>Timeline (Drag chords here)</h3>
-                <div class="timeline-wrapper">
-                    <canvas id="timeline" width="4000" height="600"></canvas>
+                <div class="timeline-wrapper" style="overflow-x: scroll; overflow-y: auto;">
+                    <canvas id="timeline" height="600" style="display: block;"></canvas>
                 </div>
                 <div class="timeline-controls">
                     <button id="scrollLeft" class="scroll-btn">◄◄ Scroll Left</button>
