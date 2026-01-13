@@ -1416,6 +1416,136 @@ class MusicApp {
                     { chord: 'G2n', position: 0, duration: 2, track: 2 }, { chord: 'E2n', position: 4, duration: 2, track: 2 }, { chord: 'C3n', position: 8, duration: 2, track: 2 }, { chord: 'D3n', position: 12, duration: 2, track: 2 },
                     { chord: 'G2n', position: 16, duration: 2, track: 2 }, { chord: 'E2n', position: 20, duration: 2, track: 2 }, { chord: 'C3n', position: 24, duration: 2, track: 2 }, { chord: 'D3n', position: 28, duration: 2, track: 2 }
                 ]
+            },
+            {
+                name: "Kun Faya Kun (Loop)",
+                blocks: [
+                    { chord: 'E4n', position: 0, duration: 1, track: 0 }, { chord: 'F#4n', position: 1, duration: 1, track: 0 }, { chord: 'G#4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'B4n', position: 4, duration: 1, track: 0 }, { chord: 'A4n', position: 5, duration: 1, track: 0 }, { chord: 'G#4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'F#4n', position: 8, duration: 1, track: 0 }, { chord: 'G#4n', position: 9, duration: 1, track: 0 }, { chord: 'B4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 12, duration: 1, track: 0 }, { chord: 'G#4n', position: 13, duration: 1, track: 0 }, { chord: 'E4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'E', position: 0, duration: 4, track: 1 }, { chord: 'C#m', position: 4, duration: 4, track: 1 }, { chord: 'A', position: 8, duration: 4, track: 1 }, { chord: 'B', position: 12, duration: 4, track: 1 },
+                    { chord: 'E', position: 16, duration: 4, track: 1 }, { chord: 'C#m', position: 20, duration: 4, track: 1 }, { chord: 'A', position: 24, duration: 4, track: 1 }, { chord: 'B', position: 28, duration: 4, track: 1 },
+                    { chord: 'E2n', position: 0, duration: 2, track: 2 }, { chord: 'C#3n', position: 4, duration: 2, track: 2 }, { chord: 'A2n', position: 8, duration: 2, track: 2 }, { chord: 'B2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'E2n', position: 16, duration: 2, track: 2 }, { chord: 'C#3n', position: 20, duration: 2, track: 2 }, { chord: 'A2n', position: 24, duration: 2, track: 2 }, { chord: 'B2n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Mere Rashke Qamar (Loop)",
+                blocks: [
+                    { chord: 'C5n', position: 0, duration: 1, track: 0 }, { chord: 'Bb4n', position: 1, duration: 1, track: 0 }, { chord: 'G4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 4, duration: 1, track: 0 }, { chord: 'Bb4n', position: 5, duration: 1, track: 0 }, { chord: 'C5n', position: 6, duration: 2, track: 0 },
+                    { chord: 'F4n', position: 8, duration: 1, track: 0 }, { chord: 'G4n', position: 9, duration: 1, track: 0 }, { chord: 'Bb4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'C5n', position: 12, duration: 1, track: 0 }, { chord: 'Bb4n', position: 13, duration: 1, track: 0 }, { chord: 'G4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'Gm', position: 0, duration: 4, track: 1 }, { chord: 'Eb', position: 4, duration: 4, track: 1 }, { chord: 'F', position: 8, duration: 4, track: 1 }, { chord: 'Gm', position: 12, duration: 4, track: 1 },
+                    { chord: 'Gm', position: 16, duration: 4, track: 1 }, { chord: 'Eb', position: 20, duration: 4, track: 1 }, { chord: 'F', position: 24, duration: 4, track: 1 }, { chord: 'Gm', position: 28, duration: 4, track: 1 },
+                    { chord: 'G2n', position: 0, duration: 2, track: 2 }, { chord: 'Eb3n', position: 4, duration: 2, track: 2 }, { chord: 'F2n', position: 8, duration: 2, track: 2 }, { chord: 'G2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'G2n', position: 16, duration: 2, track: 2 }, { chord: 'Eb3n', position: 20, duration: 2, track: 2 }, { chord: 'F2n', position: 24, duration: 2, track: 2 }, { chord: 'G2n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Tujhe Kitna Chahne Lage (Loop)",
+                blocks: [
+                    { chord: 'D4n', position: 0, duration: 1, track: 0 }, { chord: 'E4n', position: 1, duration: 1, track: 0 }, { chord: 'F#4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 4, duration: 1, track: 0 }, { chord: 'G4n', position: 5, duration: 1, track: 0 }, { chord: 'F#4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'E4n', position: 8, duration: 1, track: 0 }, { chord: 'F#4n', position: 9, duration: 1, track: 0 }, { chord: 'A4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 12, duration: 1, track: 0 }, { chord: 'F#4n', position: 13, duration: 1, track: 0 }, { chord: 'D4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'D', position: 0, duration: 4, track: 1 }, { chord: 'Bm', position: 4, duration: 4, track: 1 }, { chord: 'G', position: 8, duration: 4, track: 1 }, { chord: 'A', position: 12, duration: 4, track: 1 },
+                    { chord: 'D', position: 16, duration: 4, track: 1 }, { chord: 'Bm', position: 20, duration: 4, track: 1 }, { chord: 'G', position: 24, duration: 4, track: 1 }, { chord: 'A', position: 28, duration: 4, track: 1 },
+                    { chord: 'D3n', position: 0, duration: 2, track: 2 }, { chord: 'B2n', position: 4, duration: 2, track: 2 }, { chord: 'G2n', position: 8, duration: 2, track: 2 }, { chord: 'A2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'D3n', position: 16, duration: 2, track: 2 }, { chord: 'B2n', position: 20, duration: 2, track: 2 }, { chord: 'G2n', position: 24, duration: 2, track: 2 }, { chord: 'A2n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Nadaan Parindey (Loop)",
+                blocks: [
+                    { chord: 'E4n', position: 0, duration: 1, track: 0 }, { chord: 'F#4n', position: 1, duration: 1, track: 0 }, { chord: 'G4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'B4n', position: 4, duration: 1, track: 0 }, { chord: 'A4n', position: 5, duration: 1, track: 0 }, { chord: 'G4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'F#4n', position: 8, duration: 1, track: 0 }, { chord: 'G4n', position: 9, duration: 1, track: 0 }, { chord: 'B4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 12, duration: 1, track: 0 }, { chord: 'G4n', position: 13, duration: 1, track: 0 }, { chord: 'E4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'Em', position: 0, duration: 4, track: 1 }, { chord: 'C', position: 4, duration: 4, track: 1 }, { chord: 'G', position: 8, duration: 4, track: 1 }, { chord: 'D', position: 12, duration: 4, track: 1 },
+                    { chord: 'Em', position: 16, duration: 4, track: 1 }, { chord: 'C', position: 20, duration: 4, track: 1 }, { chord: 'G', position: 24, duration: 4, track: 1 }, { chord: 'D', position: 28, duration: 4, track: 1 },
+                    { chord: 'E2n', position: 0, duration: 2, track: 2 }, { chord: 'C3n', position: 4, duration: 2, track: 2 }, { chord: 'G2n', position: 8, duration: 2, track: 2 }, { chord: 'D2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'E2n', position: 16, duration: 2, track: 2 }, { chord: 'C3n', position: 20, duration: 2, track: 2 }, { chord: 'G2n', position: 24, duration: 2, track: 2 }, { chord: 'D2n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Jai Ho (Loop)",
+                blocks: [
+                    { chord: 'C4n', position: 0, duration: 1, track: 0 }, { chord: 'D4n', position: 1, duration: 1, track: 0 }, { chord: 'E4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 4, duration: 1, track: 0 }, { chord: 'F4n', position: 5, duration: 1, track: 0 }, { chord: 'E4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'D4n', position: 8, duration: 1, track: 0 }, { chord: 'E4n', position: 9, duration: 1, track: 0 }, { chord: 'G4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'F4n', position: 12, duration: 1, track: 0 }, { chord: 'E4n', position: 13, duration: 1, track: 0 }, { chord: 'C4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'C', position: 0, duration: 4, track: 1 }, { chord: 'F', position: 4, duration: 4, track: 1 }, { chord: 'Am', position: 8, duration: 4, track: 1 }, { chord: 'G', position: 12, duration: 4, track: 1 },
+                    { chord: 'C', position: 16, duration: 4, track: 1 }, { chord: 'F', position: 20, duration: 4, track: 1 }, { chord: 'Am', position: 24, duration: 4, track: 1 }, { chord: 'G', position: 28, duration: 4, track: 1 },
+                    { chord: 'C3n', position: 0, duration: 2, track: 2 }, { chord: 'F2n', position: 4, duration: 2, track: 2 }, { chord: 'A2n', position: 8, duration: 2, track: 2 }, { chord: 'G2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'C3n', position: 16, duration: 2, track: 2 }, { chord: 'F2n', position: 20, duration: 2, track: 2 }, { chord: 'A2n', position: 24, duration: 2, track: 2 }, { chord: 'G2n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Humma Humma (Loop)",
+                blocks: [
+                    { chord: 'A4n', position: 0, duration: 1, track: 0 }, { chord: 'C5n', position: 1, duration: 1, track: 0 }, { chord: 'E5n', position: 2, duration: 2, track: 0 },
+                    { chord: 'E5n', position: 4, duration: 1, track: 0 }, { chord: 'C5n', position: 5, duration: 1, track: 0 }, { chord: 'A4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'G4n', position: 8, duration: 1, track: 0 }, { chord: 'A4n', position: 9, duration: 1, track: 0 }, { chord: 'C5n', position: 10, duration: 2, track: 0 },
+                    { chord: 'B4n', position: 12, duration: 1, track: 0 }, { chord: 'A4n', position: 13, duration: 1, track: 0 }, { chord: 'E4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'Am', position: 0, duration: 4, track: 1 }, { chord: 'F', position: 4, duration: 4, track: 1 }, { chord: 'G', position: 8, duration: 4, track: 1 }, { chord: 'Am', position: 12, duration: 4, track: 1 },
+                    { chord: 'Am', position: 16, duration: 4, track: 1 }, { chord: 'F', position: 20, duration: 4, track: 1 }, { chord: 'G', position: 24, duration: 4, track: 1 }, { chord: 'Am', position: 28, duration: 4, track: 1 },
+                    { chord: 'A2n', position: 0, duration: 2, track: 2 }, { chord: 'F2n', position: 4, duration: 2, track: 2 }, { chord: 'G2n', position: 8, duration: 2, track: 2 }, { chord: 'A2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'A2n', position: 16, duration: 2, track: 2 }, { chord: 'F2n', position: 20, duration: 2, track: 2 }, { chord: 'G2n', position: 24, duration: 2, track: 2 }, { chord: 'A2n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Kabira (Loop)",
+                blocks: [
+                    { chord: 'G4n', position: 0, duration: 1, track: 0 }, { chord: 'A4n', position: 1, duration: 1, track: 0 }, { chord: 'B4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'D5n', position: 4, duration: 1, track: 0 }, { chord: 'C5n', position: 5, duration: 1, track: 0 }, { chord: 'B4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 8, duration: 1, track: 0 }, { chord: 'B4n', position: 9, duration: 1, track: 0 }, { chord: 'D5n', position: 10, duration: 2, track: 0 },
+                    { chord: 'C5n', position: 12, duration: 1, track: 0 }, { chord: 'B4n', position: 13, duration: 1, track: 0 }, { chord: 'G4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'G', position: 0, duration: 4, track: 1 }, { chord: 'D', position: 4, duration: 4, track: 1 }, { chord: 'Em', position: 8, duration: 4, track: 1 }, { chord: 'C', position: 12, duration: 4, track: 1 },
+                    { chord: 'G', position: 16, duration: 4, track: 1 }, { chord: 'D', position: 20, duration: 4, track: 1 }, { chord: 'Em', position: 24, duration: 4, track: 1 }, { chord: 'C', position: 28, duration: 4, track: 1 },
+                    { chord: 'G2n', position: 0, duration: 2, track: 2 }, { chord: 'D3n', position: 4, duration: 2, track: 2 }, { chord: 'E2n', position: 8, duration: 2, track: 2 }, { chord: 'C3n', position: 12, duration: 2, track: 2 },
+                    { chord: 'G2n', position: 16, duration: 2, track: 2 }, { chord: 'D3n', position: 20, duration: 2, track: 2 }, { chord: 'E2n', position: 24, duration: 2, track: 2 }, { chord: 'C3n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Maahi Ve (Loop)",
+                blocks: [
+                    { chord: 'A4n', position: 0, duration: 1, track: 0 }, { chord: 'B4n', position: 1, duration: 1, track: 0 }, { chord: 'C#5n', position: 2, duration: 2, track: 0 },
+                    { chord: 'E5n', position: 4, duration: 1, track: 0 }, { chord: 'D5n', position: 5, duration: 1, track: 0 }, { chord: 'C#5n', position: 6, duration: 2, track: 0 },
+                    { chord: 'B4n', position: 8, duration: 1, track: 0 }, { chord: 'C#5n', position: 9, duration: 1, track: 0 }, { chord: 'E5n', position: 10, duration: 2, track: 0 },
+                    { chord: 'D5n', position: 12, duration: 1, track: 0 }, { chord: 'C#5n', position: 13, duration: 1, track: 0 }, { chord: 'A4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'A', position: 0, duration: 4, track: 1 }, { chord: 'E', position: 4, duration: 4, track: 1 }, { chord: 'F#m', position: 8, duration: 4, track: 1 }, { chord: 'D', position: 12, duration: 4, track: 1 },
+                    { chord: 'A', position: 16, duration: 4, track: 1 }, { chord: 'E', position: 20, duration: 4, track: 1 }, { chord: 'F#m', position: 24, duration: 4, track: 1 }, { chord: 'D', position: 28, duration: 4, track: 1 },
+                    { chord: 'A2n', position: 0, duration: 2, track: 2 }, { chord: 'E2n', position: 4, duration: 2, track: 2 }, { chord: 'F#2n', position: 8, duration: 2, track: 2 }, { chord: 'D3n', position: 12, duration: 2, track: 2 },
+                    { chord: 'A2n', position: 16, duration: 2, track: 2 }, { chord: 'E2n', position: 20, duration: 2, track: 2 }, { chord: 'F#2n', position: 24, duration: 2, track: 2 }, { chord: 'D3n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Channa Mereya (Loop)",
+                blocks: [
+                    { chord: 'G4n', position: 0, duration: 1, track: 0 }, { chord: 'A4n', position: 1, duration: 1, track: 0 }, { chord: 'B4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'D5n', position: 4, duration: 1, track: 0 }, { chord: 'C5n', position: 5, duration: 1, track: 0 }, { chord: 'B4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 8, duration: 1, track: 0 }, { chord: 'B4n', position: 9, duration: 1, track: 0 }, { chord: 'D5n', position: 10, duration: 2, track: 0 },
+                    { chord: 'C5n', position: 12, duration: 1, track: 0 }, { chord: 'B4n', position: 13, duration: 1, track: 0 }, { chord: 'G4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'G', position: 0, duration: 4, track: 1 }, { chord: 'Em', position: 4, duration: 4, track: 1 }, { chord: 'C', position: 8, duration: 4, track: 1 }, { chord: 'D', position: 12, duration: 4, track: 1 },
+                    { chord: 'G', position: 16, duration: 4, track: 1 }, { chord: 'Em', position: 20, duration: 4, track: 1 }, { chord: 'C', position: 24, duration: 4, track: 1 }, { chord: 'D', position: 28, duration: 4, track: 1 },
+                    { chord: 'G2n', position: 0, duration: 2, track: 2 }, { chord: 'E2n', position: 4, duration: 2, track: 2 }, { chord: 'C3n', position: 8, duration: 2, track: 2 }, { chord: 'D3n', position: 12, duration: 2, track: 2 },
+                    { chord: 'G2n', position: 16, duration: 2, track: 2 }, { chord: 'E2n', position: 20, duration: 2, track: 2 }, { chord: 'C3n', position: 24, duration: 2, track: 2 }, { chord: 'D3n', position: 28, duration: 2, track: 2 }
+                ]
+            },
+            {
+                name: "Lag Ja Gale (Loop)",
+                blocks: [
+                    { chord: 'E4n', position: 0, duration: 1, track: 0 }, { chord: 'F#4n', position: 1, duration: 1, track: 0 }, { chord: 'G#4n', position: 2, duration: 2, track: 0 },
+                    { chord: 'B4n', position: 4, duration: 1, track: 0 }, { chord: 'A4n', position: 5, duration: 1, track: 0 }, { chord: 'G#4n', position: 6, duration: 2, track: 0 },
+                    { chord: 'F#4n', position: 8, duration: 1, track: 0 }, { chord: 'G#4n', position: 9, duration: 1, track: 0 }, { chord: 'B4n', position: 10, duration: 2, track: 0 },
+                    { chord: 'A4n', position: 12, duration: 1, track: 0 }, { chord: 'G#4n', position: 13, duration: 1, track: 0 }, { chord: 'E4n', position: 14, duration: 2, track: 0 },
+                    { chord: 'E', position: 0, duration: 4, track: 1 }, { chord: 'C#m', position: 4, duration: 4, track: 1 }, { chord: 'A', position: 8, duration: 4, track: 1 }, { chord: 'B', position: 12, duration: 4, track: 1 },
+                    { chord: 'E', position: 16, duration: 4, track: 1 }, { chord: 'C#m', position: 20, duration: 4, track: 1 }, { chord: 'A', position: 24, duration: 4, track: 1 }, { chord: 'B', position: 28, duration: 4, track: 1 },
+                    { chord: 'E2n', position: 0, duration: 2, track: 2 }, { chord: 'C#3n', position: 4, duration: 2, track: 2 }, { chord: 'A2n', position: 8, duration: 2, track: 2 }, { chord: 'B2n', position: 12, duration: 2, track: 2 },
+                    { chord: 'E2n', position: 16, duration: 2, track: 2 }, { chord: 'C#3n', position: 20, duration: 2, track: 2 }, { chord: 'A2n', position: 24, duration: 2, track: 2 }, { chord: 'B2n', position: 28, duration: 2, track: 2 }
+                ]
             }
         ];
     }
