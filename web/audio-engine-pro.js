@@ -7,9 +7,9 @@ class AudioEnginePro {
         this.initialized = false;
         this.synths = {};
         this.effects = {};
-        // High-quality sampled instruments (lazy-loaded)
-        this.sampleSets = {
-            // Sources: tonejs-instruments (high-quality multisamples; MP3 at 44.1kHz)
+        this.qualityMode = 'standard'; // 'standard' | 'local-hq'
+        // Sample sets: standard CDN and optional local high-quality
+        this.sampleSetsStandard = {
             'Piano': {
                 type: 'sampler',
                 options: {
@@ -32,7 +32,7 @@ class AudioEnginePro {
                     urls: {
                         'E2': 'E2.mp3', 'A2': 'A2.mp3', 'D3': 'D3.mp3', 'G3': 'G3.mp3', 'B3': 'B3.mp3', 'E4': 'E4.mp3'
                     },
-                    release: 1.2,
+                    release: 1.3,
                     attack: 0.005,
                     baseUrl: 'https://cdn.jsdelivr.net/gh/nbrosowsky/tonejs-instruments@master/samples/guitar-acoustic/'
                 }
@@ -50,6 +50,33 @@ class AudioEnginePro {
                 }
             }
         };
+
+        // Local high-quality mapping from /samples/hq/piano/pianonotes - Marker #N.wav
+        this.sampleSetsLocal = {
+            'Piano': {
+                type: 'sampler',
+                options: {
+                    urls: this.buildLocalPianoMap(),
+                    release: 2.2,
+                    attack: 0.003,
+                    baseUrl: './samples/hq/piano/'
+                }
+            }
+        };
+    }
+
+    buildLocalPianoMap() {
+        // Use a light subset to avoid loading 80 files at once; map common roots
+        const targetNotes = [
+            'A0','C1','D#1','F#1','A1','C2','D#2','F#2','A2','C3','D#3','F#3','A3','C4','D#4','F#4','A4','C5','D#5','F#5','A5','C6'
+        ];
+        const urls = {};
+        targetNotes.forEach((note, idx) => {
+            const marker = idx + 1; // Marker #1 corresponds to lowest note
+            const filename = `pianonotes - Marker #${marker}.wav`;
+            urls[note] = encodeURIComponent(filename);
+        });
+        return urls;
     }
 
     async init() {
@@ -83,6 +110,39 @@ class AudioEnginePro {
 
     setInstrument(instrument) {
         this.currentInstrument = instrument;
+    }
+
+    setQualityMode(mode) {
+        const next = mode === 'local-hq' ? 'local-hq' : 'standard';
+        if (next !== this.qualityMode) {
+            this.qualityMode = next;
+            // Dispose existing synths so they reload with new sample source
+            Object.values(this.synths).forEach(s => { try { s.dispose(); } catch (e) {} });
+            this.synths = {};
+        }
+    }
+
+    async ensureInstrumentReady(instrument) {
+        try {
+            const synth = this.getSynthForInstrument(instrument);
+            if (synth && synth.loaded && typeof synth.loaded.then === 'function') {
+                await synth.loaded;
+            }
+            return synth;
+        } catch (err) {
+            console.warn('Sampler load failed, falling back to standard set or synth for', instrument || this.currentInstrument, err);
+            // Try switching to standard quality if we were on local-hq
+            if (this.qualityMode === 'local-hq') {
+                this.setQualityMode('standard');
+                return this.getSynthForInstrument(instrument);
+            }
+            // Fallback: clear cached sampler and use a basic synth
+            if (instrument && this.synths[instrument]) {
+                try { this.synths[instrument].dispose(); } catch (_) {}
+                delete this.synths[instrument];
+            }
+            return this.getSynthForInstrument('Synth');
+        }
     }
 
     // Enhanced chord and note definitions
@@ -148,8 +208,10 @@ class AudioEnginePro {
             return this.synths[key];
         }
 
-        // Prefer high-quality sampled instruments when defined
-        const sampleDef = this.sampleSets[key];
+        const sampleSets = this.qualityMode === 'local-hq' ? this.sampleSetsLocal : this.sampleSetsStandard;
+
+        // Prefer sampled instruments when defined
+        const sampleDef = sampleSets[key];
         if (sampleDef && sampleDef.type === 'sampler') {
             const sampler = new Tone.Sampler(sampleDef.options).connect(this.effects.compressor);
             this.synths[key] = sampler;
@@ -266,7 +328,7 @@ class AudioEnginePro {
                 } else {
                     const notes = this.chordNotes[cleanNote];
                     if (notes) {
-                        const synth = this.getSynthForInstrument();
+                        const synth = await this.ensureInstrumentReady();
                         synth.triggerAttackRelease(notes, duration);
                     }
                 }
@@ -284,7 +346,7 @@ class AudioEnginePro {
         const notes = this.chordNotes[chordName];
         if (!notes) return;
 
-        const synth = this.getSynthForInstrument();
+        const synth = await this.ensureInstrumentReady();
         synth.triggerAttackRelease(notes, duration);
     }
 
@@ -294,7 +356,7 @@ class AudioEnginePro {
         const toneNote = this.noteFrequencies[note];
         if (!toneNote) return;
 
-        const synth = this.getSynthForInstrument();
+        const synth = await this.ensureInstrumentReady();
         
         if (this.currentInstrument === 'Bass') {
             synth.triggerAttackRelease(toneNote, duration);
