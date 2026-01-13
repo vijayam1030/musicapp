@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Composer - Drag & Drop Chords</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎵 Music Composer Studio</h1>
+            <p>Drag and drop chords to create music!</p>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <button id="playBtn" class="btn btn-play">▶ Play</button>
+            <button id="stopBtn" class="btn btn-stop">⬛ Stop</button>
+            <button id="repeatBtn" class="btn btn-repeat">🔁 Repeat</button>
+            <button id="newBtn" class="btn btn-new">📄 New</button>
+            <button id="exportBtn" class="btn btn-export">💾 Export WAV</button>
+            <button id="saveBtn" class="btn btn-save">💾 Save Project</button>
+            <button id="loadBtn" class="btn btn-load">📂 Load Project</button>
+            <button id="clearBtn" class="btn btn-clear">🗑 Clear</button>
+            
+            <div class="controls-right">
+                <label>BPM: <input type="number" id="bpmInput" value="100" min="60" max="200"></label>
+                <label>Key: 
+                    <select id="keySelect">
+                        <option value="C">C</option>
+                        <option value="G">G</option>
+                        <option value="D">D</option>
+                        <option value="A">A</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                    </select>
+                </label>
+                <label>Instrument: 
+                    <select id="instrumentSelect">
+                        <option value="Piano">Piano</option>
+                        <option value="Guitar">Guitar</option>
+                        <option value="Strings">Strings</option>
+                        <option value="Organ">Organ</option>
+                        <option value="Synth">Synth</option>
+                        <option value="Bass">Bass</option>
+                        <option value="Flute">Flute</option>
+                        <option value="Saxophone">Saxophone</option>
+                        <option value="Trumpet">Trumpet</option>
+                        <option value="Trombone">Trombone</option>
+                        <option value="Violin">Violin</option>
+                        <option value="Cello">Cello</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Chord Palette -->
+            <div class="chord-palette">
+                <h3>Chords</h3>
+                <div id="chordList" class="chord-list"></div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="timeline-container">
+                <h3>Timeline (Drag chords here)</h3>
+                <div class="timeline-wrapper">
+                    <canvas id="timeline" width="4000" height="600"></canvas>
+                </div>
+                <div class="timeline-controls">
+                    <button id="scrollLeft" class="scroll-btn">◄◄ Scroll Left</button>
+                    <button id="scrollRight" class="scroll-btn">Scroll Right ►►</button>
+                    <span class="help-text">Tip: Scroll with mouse wheel, Right-click to delete chords</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="loadFileInput" accept=".json" style="display: none;">
+
+    <script src="audio-engine.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
