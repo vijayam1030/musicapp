@@ -16,6 +16,7 @@ class MusicApp {
         this.beatWidth = 80;
         this.trackHeight = 60;
         this.headerHeight = 25;
+        this.maxCanvasWidth = 60000; // guard against browser canvas size limits
         this.timelineBeats = 200; // start smaller to ensure canvas renders
         this.scrollX = 0;
         this.scrollY = 0;
@@ -133,6 +134,10 @@ class MusicApp {
                 if (mouseX < 100 && wrapper.scrollLeft > 0) {
                     wrapper.scrollLeft -= 15;
                 }
+
+                this.scrollX = wrapper.scrollLeft;
+                this.scrollY = wrapper.scrollTop;
+                this.expandTimelineIfNeeded();
             }
         });
         this.canvas.addEventListener('drop', (e) => this.onDrop(e));
@@ -199,11 +204,38 @@ class MusicApp {
     }
 
     initCanvas() {
-        const newWidth = this.timelineBeats * this.beatWidth;
+        const wrapper = this.canvas.parentElement;
+        const prevScrollLeft = wrapper ? wrapper.scrollLeft : 0;
+        const prevScrollTop = wrapper ? wrapper.scrollTop : 0;
+
+        // Clamp to a safe canvas width to avoid browser limits
+        let requestedWidth = this.timelineBeats * this.beatWidth;
+
+        if (requestedWidth > this.maxCanvasWidth) {
+            // Auto-zoom out (shrink beat width) to keep full timeline visible and clickable
+            const scale = this.maxCanvasWidth / requestedWidth;
+            this.beatWidth = Math.max(20, Math.floor(this.beatWidth * scale));
+            requestedWidth = this.timelineBeats * this.beatWidth;
+            if (requestedWidth > this.maxCanvasWidth) {
+                // As a final guard, cap beats if still too wide
+                this.timelineBeats = Math.floor(this.maxCanvasWidth / this.beatWidth) - 1;
+            }
+            // Update displayed beat width after auto-zoom
+            const bwDisplay = document.getElementById('beatWidthDisplay');
+            if (bwDisplay) bwDisplay.textContent = this.beatWidth;
+            console.warn('Auto-zoomed timeline to stay within canvas limits. Beat width:', this.beatWidth, 'Timeline beats:', this.timelineBeats);
+        }
+
+        const newWidth = Math.min(requestedWidth, this.maxCanvasWidth);
         this.canvas.width = newWidth;
         this.canvas.height = 600;
         this.canvas.style.width = newWidth + 'px';
         this.canvas.style.height = '600px';
+
+        if (wrapper) {
+            wrapper.scrollLeft = prevScrollLeft;
+            wrapper.scrollTop = prevScrollTop;
+        }
         this.drawTimeline();
     }
 
@@ -898,11 +930,31 @@ class MusicApp {
                 maxPosition = endPosition;
             }
         }
-        
-        // If any block is within 100 beats of the end, expand by 500 beats
-        if (maxPosition > this.timelineBeats - 100) {
-            this.timelineBeats = Math.ceil(maxPosition / 100) * 100 + 500;
+
+        const wrapper = this.canvas.parentElement;
+        const visibleEnd = wrapper ? this.scrollX + wrapper.clientWidth : 0;
+        const nearBlockEnd = maxPosition > this.timelineBeats - 100;
+        const nearViewportEnd = wrapper ? (visibleEnd > this.canvas.width - 200) : false;
+
+        if (nearBlockEnd || nearViewportEnd) {
+            const beatsFromBlocks = Math.ceil((maxPosition + 200) / 100) * 100;
+            const beatsFromViewport = Math.ceil(((this.scrollX + (wrapper ? wrapper.clientWidth : 0) + 800) / this.beatWidth) / 100) * 100;
+            const unclampedTarget = Math.max(this.timelineBeats + 200, beatsFromBlocks, beatsFromViewport);
+
+            // Respect canvas width cap
+            const maxBeatsAllowed = Math.floor(this.maxCanvasWidth / this.beatWidth) - 1;
+            const targetBeats = Math.min(unclampedTarget, maxBeatsAllowed);
+
+            const prevScrollLeft = wrapper ? wrapper.scrollLeft : 0;
+            const prevScrollTop = wrapper ? wrapper.scrollTop : 0;
+
+            this.timelineBeats = targetBeats;
             this.initCanvas();
+
+            if (wrapper) {
+                wrapper.scrollLeft = prevScrollLeft;
+                wrapper.scrollTop = prevScrollTop;
+            }
             console.log('Timeline expanded to', this.timelineBeats, 'beats');
         }
     }
