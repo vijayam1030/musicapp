@@ -11,6 +11,8 @@ import threading
 import os
 import json
 import wave
+import ollama
+import re
 from chord_generator import ChordGenerator
 
 class ChordBlock:
@@ -163,6 +165,12 @@ class MusicApp:
                              bg='#FF9800', fg='white', font=('Arial', 14, 'bold'),
                              width=8, height=2, relief=tk.RAISED, bd=3)
         clear_btn.pack(side=tk.LEFT, padx=5, pady=10)
+        
+        # AI Generate button
+        ai_btn = tk.Button(control_frame, text="🤖 AI Generate", command=self.show_ai_dialog,
+                          bg='#9C27B0', fg='white', font=('Arial', 13, 'bold'),
+                          width=12, height=2, relief=tk.RAISED, bd=3)
+        ai_btn.pack(side=tk.LEFT, padx=5, pady=10)
         
         # BPM control
         tk.Label(control_frame, text="BPM:", bg=self.panel_color, 
@@ -910,6 +918,196 @@ class MusicApp:
             self.draw_chord_block(block)
         
         self.root.title("Music Composer - Happy Birthday")
+    
+    def show_ai_dialog(self):
+        """Show AI music generation dialog"""
+        dialog = tk.Toplevel(self.root)
+        dialog.title("🤖 AI Music Generator")
+        dialog.geometry("600x450")
+        dialog.configure(bg=self.panel_color)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Header
+        header = tk.Label(dialog, text="Describe the music you want to create",
+                         bg=self.panel_color, fg='#FFD700', font=('Arial', 16, 'bold'))
+        header.pack(pady=20)
+        
+        # Instructions
+        instructions = tk.Label(dialog, 
+                               text="Examples:\n"
+                               "• A happy pop song in C major\n"
+                               "• Sad ballad with minor chords\n"
+                               "• Upbeat jazz progression\n"
+                               "• Classical piece with arpeggios\n"
+                               "• Rock song with power chords",
+                               bg=self.panel_color, fg='#aaa', 
+                               font=('Arial', 11), justify=tk.LEFT)
+        instructions.pack(pady=10)
+        
+        # Text input
+        input_frame = tk.Frame(dialog, bg=self.panel_color)
+        input_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
+        
+        text_widget = tk.Text(input_frame, height=6, font=('Arial', 12),
+                             bg='#2b2b2b', fg='white', insertbackground='white',
+                             relief=tk.FLAT, padx=10, pady=10)
+        text_widget.pack(fill=tk.BOTH, expand=True)
+        text_widget.insert('1.0', "A cheerful melody with major chords")
+        
+        # Bind Enter key to submit
+        def on_enter(event):
+            if event.state & 0x1:  # Shift+Enter for new line
+                return
+            generate()
+            return 'break'
+        text_widget.bind('<Return>', on_enter)
+        
+        # Options
+        options_frame = tk.Frame(dialog, bg=self.panel_color)
+        options_frame.pack(pady=10)
+        
+        tk.Label(options_frame, text="Track:", bg=self.panel_color,
+                fg='white', font=('Arial', 11)).pack(side=tk.LEFT, padx=5)
+        track_var = tk.StringVar(value="0")
+        track_spin = tk.Spinbox(options_frame, from_=0, to=10, textvariable=track_var,
+                               width=5, font=('Arial', 11))
+        track_spin.pack(side=tk.LEFT, padx=5)
+        
+        tk.Label(options_frame, text="Length (bars):", bg=self.panel_color,
+                fg='white', font=('Arial', 11)).pack(side=tk.LEFT, padx=(20, 5))
+        length_var = tk.StringVar(value="8")
+        length_spin = tk.Spinbox(options_frame, from_=4, to=32, textvariable=length_var,
+                                width=5, font=('Arial', 11))
+        length_spin.pack(side=tk.LEFT, padx=5)
+        
+        # Status label
+        status_label = tk.Label(dialog, text="", bg=self.panel_color,
+                               fg='#4CAF50', font=('Arial', 10, 'italic'))
+        status_label.pack(pady=5)
+        
+        # Buttons
+        button_frame = tk.Frame(dialog, bg=self.panel_color)
+        button_frame.pack(pady=20)
+        
+        def generate():
+            description = text_widget.get('1.0', tk.END).strip()
+            if not description:
+                messagebox.showwarning("No Description", "Please describe the music you want!")
+                return
+            
+            track = int(track_var.get())
+            length = int(length_var.get())
+            
+            status_label.config(text="🤖 Generating with AI...", fg='#FFD700')
+            dialog.update()
+            
+            # Generate in background thread
+            def generate_thread():
+                try:
+                    blocks = self.generate_music_with_ai(description, track, length)
+                    if blocks:
+                        self.root.after(0, lambda: self.add_ai_blocks(blocks, status_label, dialog))
+                    else:
+                        self.root.after(0, lambda: status_label.config(
+                            text="❌ Generation failed. Make sure Ollama is running!", fg='#f44336'))
+                except Exception as e:
+                    self.root.after(0, lambda: status_label.config(
+                        text=f"❌ Error: {str(e)}", fg='#f44336'))
+            
+            threading.Thread(target=generate_thread, daemon=True).start()
+        
+        generate_btn = tk.Button(button_frame, text="✨ Generate Music",
+                                command=generate, bg='#4CAF50', fg='white',
+                                font=('Arial', 12, 'bold'), width=15, height=2,
+                                cursor='hand2')
+        generate_btn.pack(side=tk.LEFT, padx=10)
+        
+        # Make it the default button
+        dialog.bind('<Return>', lambda e: generate() if not text_widget.focus_get() == text_widget else None)
+        
+        close_btn = tk.Button(button_frame, text="Close",
+                             command=dialog.destroy, bg='#555', fg='white',
+                             font=('Arial', 12, 'bold'), width=10, height=2)
+        close_btn.pack(side=tk.LEFT, padx=10)
+    
+    def generate_music_with_ai(self, description, track, length):
+        """Use Ollama to generate music based on description"""
+        prompt = f"""You are a music composition AI. Generate a chord progression based on this description: "{description}"
+
+Create a progression with {length} bars (4 beats per bar = {length * 4} total beats).
+
+Output ONLY a JSON array with this exact format:
+[
+  {{"chord": "C", "position": 0, "duration": 4}},
+  {{"chord": "Am", "position": 4, "duration": 4}},
+  {{"chord": "F", "position": 8, "duration": 4}}
+]
+
+Available chords: C, D, E, F, G, A, B, Cm, Dm, Em, Fm, Gm, Am, Bm, C7, D7, E7, F7, G7, A7, B7, 
+Cmaj7, Dmaj7, Emaj7, Fmaj7, Gmaj7, Amaj7, Cm7, Dm7, Em7, Fm7, Gm7, Am7,
+Csus2, Csus4, Dsus2, Dsus4, Gsus4, C9, D9, E9, G9, Cadd9, Dadd9, Gadd9,
+C5, D5, E5, F5, G5, A5 (power chords), Cdim, Ddim, Edim, Gdim, Adim,
+Single notes for melody: C4n, D4n, E4n, F4n, G4n, A4n, B4n, C5n, D5n, E5n, F5n, G5n
+
+Rules:
+- Position is in beats (0, 4, 8, 12, etc.)
+- Duration is in beats (typically 2 or 4)
+- Match the mood: happy=major, sad=minor, energetic=fast changes
+- Output ONLY valid JSON, no explanations"""
+
+        try:
+            # Try to use llama3 or mistral for best accuracy
+            models = ['llama3.2', 'llama3', 'mistral', 'llama2']
+            response = None
+            
+            for model in models:
+                try:
+                    response = ollama.chat(model=model, messages=[
+                        {'role': 'user', 'content': prompt}
+                    ])
+                    break
+                except:
+                    continue
+            
+            if not response:
+                raise Exception("No Ollama model available. Install with: ollama pull llama3.2")
+            
+            content = response['message']['content'].strip()
+            
+            # Extract JSON from response
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                chord_data = json.loads(json_match.group())
+                
+                # Convert to ChordBlock objects
+                blocks = []
+                for item in chord_data:
+                    if 'chord' in item and 'position' in item:
+                        duration = item.get('duration', 4)
+                        blocks.append(ChordBlock(
+                            item['chord'],
+                            item['position'],
+                            duration,
+                            track
+                        ))
+                
+                return blocks
+            else:
+                raise Exception("Could not parse AI response")
+                
+        except Exception as e:
+            print(f"AI Generation Error: {e}")
+            return None
+    
+    def add_ai_blocks(self, blocks, status_label, dialog):
+        """Add AI-generated blocks to timeline"""
+        for block in blocks:
+            self.chord_blocks.append(block)
+            self.draw_chord_block(block)
+        
+        status_label.config(text=f"✅ Generated {len(blocks)} chords!", fg='#4CAF50')
+        self.root.after(1500, dialog.destroy)
     
     def run(self):
         """Run the application"""

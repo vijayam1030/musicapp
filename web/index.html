@@ -24,6 +24,7 @@
             <button id="saveBtn" class="btn btn-save">💾 Save Project</button>
             <button id="loadBtn" class="btn btn-load">📂 Load Project</button>
             <button id="clearBtn" class="btn btn-clear">🗑 Clear</button>
+            <button id="aiBtn" class="btn btn-ai">🤖 AI Generate</button>
             
             <div class="controls-right">
                 <label>BPM: <input type="number" id="bpmInput" value="100" min="60" max="200"></label>
@@ -53,6 +54,16 @@
                         <option value="Cello">Cello</option>
                     </select>
                 </label>
+                <label style="margin-left: 20px;">Track Height:
+                    <button id="trackHeightMinus" class="btn" style="padding: 8px 12px; margin: 0 5px;">−</button>
+                    <span id="trackHeightDisplay" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">60</span>
+                    <button id="trackHeightPlus" class="btn" style="padding: 8px 12px; margin: 0 5px;">+</button>
+                </label>
+                <label style="margin-left: 20px;">Beat Width:
+                    <button id="beatWidthMinus" class="btn" style="padding: 8px 12px; margin: 0 5px;">−</button>
+                    <span id="beatWidthDisplay" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">80</span>
+                    <button id="beatWidthPlus" class="btn" style="padding: 8px 12px; margin: 0 5px;">+</button>
+                </label>
             </div>
         </div>
 
@@ -73,7 +84,43 @@
                 <div class="timeline-controls">
                     <button id="scrollLeft" class="scroll-btn">◄◄ Scroll Left</button>
                     <button id="scrollRight" class="scroll-btn">Scroll Right ►►</button>
-                    <span class="help-text">Tip: Scroll with mouse wheel, Right-click to delete chords</span>
+                    <span class="help-text">💡 Drag right edge to resize • Drop on existing note to stack • Right-click to delete</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Dialog Modal -->
+    <div id="aiModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🤖 AI Music Generator</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instructions">Describe the music you want to create:</p>
+                <div class="examples">
+                    <strong>Examples:</strong>
+                    <ul>
+                        <li>A happy pop song in C major</li>
+                        <li>Sad ballad with minor chords</li>
+                        <li>Upbeat jazz progression</li>
+                        <li>Classical piece with arpeggios</li>
+                        <li>Rock song with power chords</li>
+                    </ul>
+                </div>
+                <textarea id="aiDescription" rows="5" placeholder="A cheerful melody with major chords"></textarea>
+                
+                <div class="ai-options">
+                    <label>Track: <input type="number" id="aiTrack" min="0" max="10" value="0"></label>
+                    <label>Length (bars): <input type="number" id="aiLength" min="4" max="32" value="8"></label>
+                </div>
+                
+                <div id="aiStatus" class="ai-status"></div>
+                
+                <div class="modal-buttons">
+                    <button id="generateBtn" class="btn btn-generate">✨ Generate Music</button>
+                    <button id="closeModalBtn" class="btn btn-secondary">Close</button>
                 </div>
             </div>
         </div>
@@ -82,7 +129,16 @@
     <!-- Hidden file inputs -->
     <input type="file" id="loadFileInput" accept=".json" style="display: none;">
 
-    <script src="audio-engine.js"></script>
+    <!-- Tone.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <!-- Professional Audio Engine -->
+    <script src="audio-engine-pro.js"></script>
     <script src="app.js"></script>
+    <script src="ai-generator.js"></script>
+    
+    <!-- Quality Indicator -->
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(76, 175, 80, 0.9); color: white; padding: 8px 15px; border-radius: 20px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 1000;">
+        ⭐ PROFESSIONAL AUDIO • Tone.js
+    </div>
 </body>
 </html>

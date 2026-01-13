@@ -12,9 +12,24 @@ class MusicApp {
         this.beatWidth = 80;
         this.trackHeight = 60;
         this.headerHeight = 25;
-        this.timelineBeats = 50;
+        this.timelineBeats = 500;
         this.scrollX = 0;
         this.scrollY = 0;
+        this.resizingBlock = null;
+        this.resizeStartX = 0;
+        this.resizeOriginalDuration = 0;
+        this.draggingBlock = null;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.dragOriginalPosition = 0;
+        this.dragOriginalTrack = 0;
+        this.selectedBlocks = [];
+        this.clipboard = [];
+        this.history = [];
+        this.historyIndex = -1;
+        this.maxHistory = 50;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
         
         this.initUI();
         this.initCanvas();
@@ -24,7 +39,7 @@ class MusicApp {
     initUI() {
         // Chord sections
         const chordSections = [
-            { name: 'SINGLE NOTES', chords: ['C4n', 'D4n', 'E4n', 'F4n', 'G4n', 'A4n', 'B4n', 'C5n', 'D5n', 'E5n', 'F5n', 'G5n', 'A5n', 'B5n'] },
+            { name: 'SINGLE NOTES', chords: ['C4n', 'C#4n', 'D4n', 'D#4n', 'E4n', 'F4n', 'F#4n', 'G4n', 'G#4n', 'A4n', 'A#4n', 'B4n', 'C5n', 'C#5n', 'D5n', 'D#5n', 'E5n', 'F5n', 'F#5n', 'G5n', 'G#5n', 'A5n', 'A#5n', 'B5n'] },
             { name: 'MAJOR CHORDS', chords: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'Db', 'Eb', 'Gb', 'Ab', 'Bb'] },
             { name: 'MINOR CHORDS', chords: ['Cm', 'Dm', 'Em', 'Fm', 'Gm', 'Am', 'Bm', 'C#m', 'Ebm', 'F#m', 'Abm', 'Bbm'] },
             { name: 'DOMINANT 7TH', chords: ['C7', 'D7', 'E7', 'F7', 'G7', 'A7', 'B7', 'Bb7', 'Eb7', 'Ab7'] },
@@ -71,6 +86,14 @@ class MusicApp {
         document.getElementById('clearBtn').addEventListener('click', () => this.clear());
         document.getElementById('scrollLeft').addEventListener('click', () => this.scroll(-200));
         document.getElementById('scrollRight').addEventListener('click', () => this.scroll(200));
+        document.getElementById('trackHeightPlus').addEventListener('click', () => this.adjustTrackHeight(10));
+        document.getElementById('trackHeightMinus').addEventListener('click', () => this.adjustTrackHeight(-10));
+        document.getElementById('beatWidthPlus').addEventListener('click', () => this.adjustBeatWidth(10));
+        document.getElementById('beatWidthMinus').addEventListener('click', () => this.adjustBeatWidth(-10));
+        // Note: AI button is handled by ai-generator.js
+        
+        // Keyboard event for Delete key
+        document.addEventListener('keydown', (e) => this.onKeyDown(e));
 
         // Controls
         document.getElementById('bpmInput').addEventListener('change', (e) => {
@@ -84,6 +107,10 @@ class MusicApp {
         this.canvas.addEventListener('dragover', (e) => e.preventDefault());
         this.canvas.addEventListener('drop', (e) => this.onDrop(e));
         this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
+        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+        this.canvas.addEventListener('mouseleave', (e) => this.onMouseUp(e));
         this.canvas.parentElement.addEventListener('scroll', () => this.drawTimeline());
     }
 
@@ -114,11 +141,25 @@ class MusicApp {
         this.ctx.font = 'bold 12px Arial';
         for (let i = 0; i <= this.timelineBeats; i++) {
             const x = i * this.beatWidth;
+            // Main beat line (stronger)
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = '#444';
             this.ctx.beginPath();
             this.ctx.moveTo(x, this.headerHeight);
             this.ctx.lineTo(x, this.canvas.height);
             this.ctx.stroke();
             this.ctx.fillText(i.toString(), x + 5, this.headerHeight / 2 + 4);
+            
+            // Quarter beat subdivisions (lighter)
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeStyle = '#282828';
+            for (let q = 1; q < 4; q++) {
+                const qx = x + (q * this.beatWidth / 4);
+                this.ctx.beginPath();
+                this.ctx.moveTo(qx, this.headerHeight);
+                this.ctx.lineTo(qx, this.canvas.height);
+                this.ctx.stroke();
+            }
         }
 
         // Track lines
@@ -146,16 +187,214 @@ class MusicApp {
         const width = block.duration * this.beatWidth - 4;
         const height = this.trackHeight - 10;
 
-        this.ctx.fillStyle = this.getChordColor(block.chord);
-        this.ctx.strokeStyle = 'white';
-        this.ctx.lineWidth = 2;
+        // Handle multiple notes (use gradient or first note's color)
+        const chords = block.chord.split(',');
+        if (chords.length > 1) {
+            // Multiple notes - use gradient
+            const gradient = this.ctx.createLinearGradient(x + 2, y, x + 2, y + height);
+            gradient.addColorStop(0, this.getChordColor(chords[0].trim()));
+            gradient.addColorStop(1, this.getChordColor(chords[chords.length - 1].trim()));
+            this.ctx.fillStyle = gradient;
+        } else {
+            this.ctx.fillStyle = this.getChordColor(block.chord);
+        }
+        
+        // Highlight selected blocks with gold border
+        if (this.selectedBlocks.includes(block)) {
+            this.ctx.strokeStyle = '#FFD700';
+            this.ctx.lineWidth = 4;
+        } else {
+            this.ctx.strokeStyle = 'white';
+            this.ctx.lineWidth = 2;
+        }
+        
         this.ctx.fillRect(x + 2, y, width, height);
         this.ctx.strokeRect(x + 2, y, width, height);
 
+        // Draw resize handle (vertical line on right edge)
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        this.ctx.fillRect(x + width - 2, y + 5, 4, height - 10);
+
+        // Display text - show all notes or abbreviate if too many
         this.ctx.fillStyle = 'white';
-        this.ctx.font = 'bold 14px Arial';
+        this.ctx.font = 'bold 12px Arial';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(block.chord, x + width / 2, y + height / 2 + 5);
+        
+        if (chords.length > 3) {
+            this.ctx.fillText(`${chords.length} notes`, x + width / 2, y + height / 2 + 5);
+        } else {
+            const displayText = block.chord.length > 15 ? block.chord.substring(0, 12) + '...' : block.chord;
+            this.ctx.fillText(displayText, x + width / 2, y + height / 2 + 5);
+        }
+    }
+
+    onMouseDown(e) {
+        if (e.button !== 0) return; // Only left click
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left + this.scrollX;
+        const y = e.clientY - rect.top + this.scrollY;
+
+        // Check if clicking near the right edge of any block (resize handle)
+        for (let block of this.chordBlocks) {
+            const bx = block.position * this.beatWidth;
+            const by = this.headerHeight + block.track * this.trackHeight + 5;
+            const bw = block.duration * this.beatWidth - 4;
+            const bh = this.trackHeight - 10;
+
+            // Check if clicking within 10px of right edge
+            if (x >= bx + bw - 10 && x <= bx + bw + 10 && y >= by && y <= by + bh) {
+                this.resizingBlock = block;
+                this.resizeStartX = x;
+                this.resizeOriginalDuration = block.duration;
+                this.canvas.style.cursor = 'ew-resize';
+                
+                // Add to selection if not already selected
+                if (!this.selectedBlocks.includes(block)) {
+                    if (e.ctrlKey) {
+                        this.selectedBlocks.push(block);
+                    } else {
+                        this.selectedBlocks = [block];
+                    }
+                }
+                this.drawTimeline();
+                return;
+            }
+            
+            // Check if clicking on the block itself
+            if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
+                // Ctrl+Click for multi-select
+                if (e.ctrlKey) {
+                    const index = this.selectedBlocks.indexOf(block);
+                    if (index > -1) {
+                        // Deselect if already selected
+                        this.selectedBlocks.splice(index, 1);
+                    } else {
+                        // Add to selection
+                        this.selectedBlocks.push(block);
+                    }
+                } else {
+                    // Regular click - select and prepare to drag
+                    this.selectedBlocks = [block];
+                    this.draggingBlock = block;
+                    this.dragStartX = x;
+                    this.dragStartY = y;
+                    this.dragOriginalPosition = block.position;
+                    this.dragOriginalTrack = block.track;
+                    this.canvas.style.cursor = 'move';
+                }
+                this.drawTimeline();
+                return;
+            }
+        }
+        
+        // Clicked on empty area - deselect (unless Ctrl held)
+        if (!e.ctrlKey) {
+            this.selectedBlocks = [];
+            this.drawTimeline();
+        }
+    }
+
+    onMouseMove(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left + this.scrollX;
+        const y = e.clientY - rect.top + this.scrollY;
+        
+        // Track mouse position for paste
+        this.lastMouseX = x;
+        this.lastMouseY = y;
+
+        // If dragging a block to move it
+        if (this.draggingBlock) {
+            const deltaX = x - this.dragStartX;
+            const deltaY = y - this.dragStartY;
+            // Snap to quarter beats
+            const deltaBeat = Math.round(deltaX / this.beatWidth * 4) / 4;
+            const deltaTrack = Math.round(deltaY / this.trackHeight);
+            
+            this.draggingBlock.position = Math.max(0, this.dragOriginalPosition + deltaBeat);
+            this.draggingBlock.track = Math.max(0, this.dragOriginalTrack + deltaTrack);
+            
+            // Auto-scroll when dragging near edges
+            const wrapper = this.canvas.parentElement;
+            if (wrapper) {
+                const mouseX = e.clientX - rect.left;
+                if (mouseX > wrapper.clientWidth - 100) {
+                    wrapper.scrollLeft += 15;
+                }
+                if (mouseX < 100 && wrapper.scrollLeft > 0) {
+                    wrapper.scrollLeft -= 15;
+                }
+            }
+            
+            this.canvas.style.cursor = 'move';
+            this.expandTimelineIfNeeded();
+            this.drawTimeline();
+            return;
+        }
+
+        // If resizing
+        if (this.resizingBlock) {
+            const deltaX = x - this.resizeStartX;
+            // Snap to quarter beats
+            const deltaBeat = Math.round(deltaX / this.beatWidth * 4) / 4;
+            const newDuration = Math.max(0.25, this.resizeOriginalDuration + deltaBeat);
+            this.resizingBlock.duration = newDuration;
+            
+            // Auto-scroll when dragging near the right edge
+            const wrapper = this.canvas.parentElement;
+            if (wrapper) {
+                const mouseX = e.clientX - rect.left;
+                const wrapperWidth = wrapper.clientWidth;
+                
+                // Scroll right when within 100px of right edge
+                if (mouseX > wrapperWidth - 100) {
+                    wrapper.scrollLeft += 15;
+                }
+                // Scroll left when within 100px of left edge  
+                if (mouseX < 100 && wrapper.scrollLeft > 0) {
+                    wrapper.scrollLeft -= 15;
+                }
+            }
+            
+            // Expand timeline if needed
+            this.expandTimelineIfNeeded();
+            this.drawTimeline();
+            return;
+        }
+
+        // Update cursor when hovering over resize handle
+        let onResizeHandle = false;
+        for (let block of this.chordBlocks) {
+            const bx = block.position * this.beatWidth;
+            const by = this.headerHeight + block.track * this.trackHeight + 5;
+            const bw = block.duration * this.beatWidth - 4;
+            const bh = this.trackHeight - 10;
+
+            if (x >= bx + bw - 10 && x <= bx + bw + 10 && y >= by && y <= by + bh) {
+                onResizeHandle = true;
+                break;
+            }
+        }
+        this.canvas.style.cursor = onResizeHandle ? 'ew-resize' : 'crosshair';
+    }
+
+    onMouseUp(e) {
+        if (this.draggingBlock) {
+            this.saveHistory();
+            this.draggingBlock = null;
+            this.canvas.style.cursor = 'crosshair';
+            this.expandTimelineIfNeeded();
+            this.drawTimeline();
+            return;
+        }
+        
+        if (this.resizingBlock) {
+            this.resizingBlock = null;
+            this.canvas.style.cursor = 'crosshair';
+            this.expandTimelineIfNeeded();
+            this.drawTimeline();
+        }
     }
 
     onDrop(e) {
@@ -168,17 +407,32 @@ class MusicApp {
 
         if (y < this.headerHeight) return;
 
-        const beat = Math.floor(x / this.beatWidth);
+        // Snap to quarter beats (0.25 increments)
+        const beat = Math.round(x / this.beatWidth * 4) / 4;
         const track = Math.floor((y - this.headerHeight) / this.trackHeight);
 
-        this.chordBlocks.push({
-            chord: this.draggingChord,
-            position: beat,
-            duration: 1,
-            track: track
-        });
+        // Check if there's already a block at this exact position
+        const existingBlock = this.chordBlocks.find(
+            b => Math.abs(b.position - beat) < 0.01 && b.track === track
+        );
+
+        if (existingBlock && existingBlock.chord.indexOf(',') === -1 && this.draggingChord.indexOf(',') === -1) {
+            // Combine notes into a chord (e.g., "C4n" + "E4n" = "C4n,E4n")
+            this.saveHistory();
+            existingBlock.chord = existingBlock.chord + ',' + this.draggingChord;
+        } else {
+            // Create new block
+            this.saveHistory();
+            this.chordBlocks.push({
+                chord: this.draggingChord,
+                position: beat,
+                duration: 0.25,
+                track: track
+            });
+        }
 
         this.draggingChord = null;
+        this.expandTimelineIfNeeded();
         this.drawTimeline();
     }
 
@@ -188,6 +442,8 @@ class MusicApp {
         const x = e.clientX - rect.left + this.scrollX;
         const y = e.clientY - rect.top + this.scrollY;
 
+        // Check if right-clicking on a block
+        let clickedBlock = null;
         for (let i = this.chordBlocks.length - 1; i >= 0; i--) {
             const block = this.chordBlocks[i];
             const bx = block.position * this.beatWidth;
@@ -196,11 +452,87 @@ class MusicApp {
             const bh = this.trackHeight - 10;
 
             if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
-                this.chordBlocks.splice(i, 1);
-                this.drawTimeline();
+                clickedBlock = block;
                 break;
             }
         }
+
+        // Show context menu
+        this.showContextMenu(e.clientX, e.clientY, clickedBlock, x, y);
+    }
+
+    showContextMenu(screenX, screenY, block, canvasX, canvasY) {
+        // Remove existing context menu if any
+        const existingMenu = document.getElementById('contextMenu');
+        if (existingMenu) existingMenu.remove();
+
+        // Create context menu
+        const menu = document.createElement('div');
+        menu.id = 'contextMenu';
+        menu.style.cssText = `
+            position: fixed;
+            left: ${screenX}px;
+            top: ${screenY}px;
+            background: #2c3e50;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            padding: 5px 0;
+            z-index: 10000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        `;
+
+        const menuItems = [];
+        
+        if (block) {
+            menuItems.push({ label: '❌ Delete', action: () => {
+                this.saveHistory();
+                const index = this.chordBlocks.indexOf(block);
+                if (index > -1) this.chordBlocks.splice(index, 1);
+                this.drawTimeline();
+            }});
+            
+            if (!this.selectedBlocks.includes(block)) {
+                this.selectedBlocks = [block];
+                this.drawTimeline();
+            }
+        }
+        
+        if (this.selectedBlocks.length > 0) {
+            menuItems.push({ label: '📋 Copy', action: () => this.copySelected() });
+        }
+        
+        if (this.clipboard.length > 0) {
+            menuItems.push({ label: '📌 Paste', action: () => this.paste(canvasX, canvasY) });
+        }
+
+        menuItems.forEach(item => {
+            const div = document.createElement('div');
+            div.textContent = item.label;
+            div.style.cssText = `
+                padding: 8px 20px;
+                cursor: pointer;
+                color: white;
+                font-weight: bold;
+            `;
+            div.onmouseover = () => div.style.background = '#34495e';
+            div.onmouseout = () => div.style.background = 'transparent';
+            div.onclick = () => {
+                item.action();
+                menu.remove();
+            };
+            menu.appendChild(div);
+        });
+
+        document.body.appendChild(menu);
+
+        // Remove menu when clicking elsewhere
+        const removeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', removeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', removeMenu), 100);
     }
 
     async play() {
@@ -208,18 +540,27 @@ class MusicApp {
         this.isPlaying = true;
         document.getElementById('playBtn').disabled = true;
 
+        // Initialize audio engine first
+        await window.audioEngine.init();
+
         do {
             const beatDuration = 60 / this.bpm;
             const sortedBlocks = [...this.chordBlocks].sort((a, b) => a.position - b.position);
+            
+            // Get start time reference
+            const startTime = Date.now();
 
+            // Schedule all blocks relative to start time
             for (const block of sortedBlocks) {
                 if (!this.isPlaying) break;
-                const startTime = block.position * beatDuration;
+                const blockStartTime = block.position * beatDuration * 1000;
                 const duration = block.duration * beatDuration;
                 
                 setTimeout(() => {
-                    window.audioEngine.playChord(block.chord, duration);
-                }, startTime * 1000);
+                    if (this.isPlaying) {
+                        window.audioEngine.playChord(block.chord, duration);
+                    }
+                }, blockStartTime);
             }
 
             if (sortedBlocks.length > 0) {
@@ -235,9 +576,10 @@ class MusicApp {
 
     stop() {
         this.isPlaying = false;
-        if (window.audioEngine.audioContext) {
-            window.audioEngine.audioContext.close();
-            window.audioEngine.audioContext = null;
+        // Stop all scheduled sounds in Tone.js
+        if (window.audioEngine && window.audioEngine.initialized) {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
         }
     }
 
@@ -264,7 +606,178 @@ class MusicApp {
 
     scroll(amount) {
         const wrapper = this.canvas.parentElement;
-        wrapper.scrollLeft += amount;
+        if (wrapper) {
+            wrapper.scrollLeft += amount;
+            wrapper.scrollTo({
+                left: wrapper.scrollLeft,
+                behavior: 'smooth'
+            });
+            console.log('Scrolling by', amount, 'new position:', wrapper.scrollLeft);
+        } else {
+            console.error('Timeline wrapper not found');
+        }
+    }
+
+    adjustTrackHeight(change) {
+        this.trackHeight = Math.max(40, Math.min(150, this.trackHeight + change));
+        document.getElementById('trackHeightDisplay').textContent = this.trackHeight;
+        this.initCanvas();
+        this.drawTimeline();
+    }
+
+    adjustBeatWidth(change) {
+        this.beatWidth = Math.max(40, Math.min(150, this.beatWidth + change));
+        document.getElementById('beatWidthDisplay').textContent = this.beatWidth;
+        this.initCanvas();
+        this.drawTimeline();
+    }
+
+    onKeyDown(e) {
+        // Delete selected blocks
+        if (e.key === 'Delete' && this.selectedBlocks.length > 0) {
+            this.saveHistory();
+            this.selectedBlocks.forEach(block => {
+                const index = this.chordBlocks.indexOf(block);
+                if (index > -1) {
+                    this.chordBlocks.splice(index, 1);
+                }
+            });
+            this.selectedBlocks = [];
+            this.drawTimeline();
+        }
+        
+        // Undo (Ctrl+Z)
+        if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+            e.preventDefault();
+            this.undo();
+        }
+        
+        // Redo (Ctrl+Shift+Z or Ctrl+Y)
+        if (e.ctrlKey && ((e.shiftKey && e.key === 'Z') || e.key === 'y')) {
+            e.preventDefault();
+            this.redo();
+        }
+        
+        // Copy (Ctrl+C)
+        if (e.ctrlKey && e.key === 'c' && this.selectedBlocks.length > 0) {
+            e.preventDefault();
+            this.copySelected();
+        }
+        
+        // Paste (Ctrl+V)
+        if (e.ctrlKey && e.key === 'v' && this.clipboard.length > 0) {
+            e.preventDefault();
+            this.paste();
+        }
+        
+        // Select All (Ctrl+A)
+        if (e.ctrlKey && e.key === 'a') {
+            e.preventDefault();
+            this.selectedBlocks = [...this.chordBlocks];
+            this.drawTimeline();
+        }
+    }
+
+    saveHistory() {
+        // Remove any redo history when making new changes
+        this.history = this.history.slice(0, this.historyIndex + 1);
+        
+        // Save current state
+        this.history.push(JSON.parse(JSON.stringify(this.chordBlocks)));
+        
+        // Limit history size
+        if (this.history.length > this.maxHistory) {
+            this.history.shift();
+        } else {
+            this.historyIndex++;
+        }
+    }
+
+    undo() {
+        if (this.historyIndex > 0) {
+            this.historyIndex--;
+            this.chordBlocks = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+            this.selectedBlocks = [];
+            this.drawTimeline();
+            console.log('Undo - restored to history index', this.historyIndex);
+        }
+    }
+
+    redo() {
+        if (this.historyIndex < this.history.length - 1) {
+            this.historyIndex++;
+            this.chordBlocks = JSON.parse(JSON.stringify(this.history[this.historyIndex]));
+            this.selectedBlocks = [];
+            this.drawTimeline();
+            console.log('Redo - restored to history index', this.historyIndex);
+        }
+    }
+
+    copySelected() {
+        if (this.selectedBlocks.length > 0) {
+            this.clipboard = JSON.parse(JSON.stringify(this.selectedBlocks));
+            console.log('Copied', this.clipboard.length, 'blocks');
+        }
+    }
+
+    paste(mouseX = null, mouseY = null) {
+        if (this.clipboard.length === 0) return;
+        
+        this.saveHistory();
+        this.selectedBlocks = [];
+        
+        // Find minimum position and track from clipboard
+        let minPosition = Infinity;
+        let minTrack = Infinity;
+        this.clipboard.forEach(block => {
+            if (block.position < minPosition) minPosition = block.position;
+            if (block.track < minTrack) minTrack = block.track;
+        });
+        
+        // Use mouse position if provided, otherwise use last mouse position
+        const x = mouseX !== null ? mouseX : this.lastMouseX;
+        const y = mouseY !== null ? mouseY : this.lastMouseY;
+        
+        // Calculate target position and track from mouse/click position
+        const targetPosition = Math.floor(x / this.beatWidth);
+        const targetTrack = y < this.headerHeight ? 0 : Math.floor((y - this.headerHeight) / this.trackHeight);
+        
+        const positionOffset = targetPosition - minPosition;
+        const trackOffset = targetTrack - minTrack;
+        
+        // Create new blocks at click position
+        this.clipboard.forEach(block => {
+            const newBlock = {
+                chord: block.chord,
+                position: block.position + positionOffset,
+                duration: block.duration,
+                track: Math.max(0, block.track + trackOffset),
+                color: block.color
+            };
+            this.chordBlocks.push(newBlock);
+            this.selectedBlocks.push(newBlock);
+        });
+        
+        this.drawTimeline();
+        console.log('Pasted', this.clipboard.length, 'blocks at position', targetPosition, 'track', targetTrack);
+    }
+
+    expandTimelineIfNeeded() {
+        // Find the rightmost block
+        let maxPosition = 0;
+        for (const block of this.chordBlocks) {
+            const endPosition = block.position + block.duration;
+            if (endPosition > maxPosition) {
+                maxPosition = endPosition;
+            }
+        }
+        
+        // If any block is within 50 beats of the end, expand by 200 beats
+        if (maxPosition > this.timelineBeats - 50) {
+            this.timelineBeats = Math.ceil(maxPosition / 100) * 100 + 200;
+            this.initCanvas();
+            console.log('Timeline expanded to', this.timelineBeats, 'beats');
+        }
     }
 
     saveProject() {

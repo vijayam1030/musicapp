@@ -96,6 +96,37 @@ class AudioEngine {
 
     async playChord(chordName, duration, startTime = 0) {
         const ctx = this.init();
+        
+        // Handle multiple notes separated by comma (e.g., "C4n,E4n,G4n")
+        if (chordName.indexOf(',') !== -1) {
+            const individualNotes = chordName.split(',');
+            for (const noteName of individualNotes) {
+                const cleanNote = noteName.trim();
+                // Handle single notes (ending with 'n')
+                if (cleanNote.endsWith('n')) {
+                    const note = cleanNote.slice(0, -1); // Remove 'n'
+                    await this.playNote(note, duration, startTime);
+                } else {
+                    // It's a chord name
+                    const notes = this.chordNotes[cleanNote];
+                    if (notes) {
+                        for (const note of notes) {
+                            await this.playNote(note, duration, startTime);
+                        }
+                    }
+                }
+            }
+            return;
+        }
+        
+        // Handle single notes (ending with 'n')
+        if (chordName.endsWith('n')) {
+            const note = chordName.slice(0, -1); // Remove 'n'
+            await this.playNote(note, duration, startTime);
+            return;
+        }
+        
+        // Handle regular chords
         const notes = this.chordNotes[chordName];
         if (!notes) return;
 

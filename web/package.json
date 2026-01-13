@@ -1,0 +1,15 @@
+{
+  "name": "music-composer-studio",
+  "version": "2.0.0",
+  "description": "Professional music composition app with AI generation",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "dev": "python -m http.server 8080"
+  },
+  "dependencies": {
+    "tone": "^14.9.17"
+  },
+  "author": "",
+  "license": "MIT"
+}
