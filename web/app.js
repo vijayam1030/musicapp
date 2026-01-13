@@ -957,11 +957,25 @@ class MusicApp {
         if (songIndex === -1) {
             selectedIndex = Math.floor(Math.random() * songs.length);
         } else {
-            selectedIndex = songIndex;
+            selectedIndex = Math.max(0, Math.min(songs.length - 1, songIndex));
         }
         
+        // Stop any current playback and clear selection/scroll to keep UI in sync
+        this.stop();
+        this.selectedBlocks = [];
+        this.scrollX = 0;
+        this.scrollY = 0;
+
+        // Load deep copy so edits don’t mutate the preset
         const selectedSong = songs[selectedIndex];
-        this.chordBlocks = selectedSong.blocks;
+        this.chordBlocks = JSON.parse(JSON.stringify(selectedSong.blocks));
+
+        // Sync dropdown to the chosen song (even when random)
+        const songSelect = document.getElementById('songSelect');
+        if (songSelect) {
+            songSelect.value = String(selectedIndex);
+        }
+
         console.log('Loaded default song:', selectedSong.name);
         this.initCanvas();
     }
