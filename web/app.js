@@ -959,7 +959,7 @@ class MusicApp {
         }
     }
 
-    saveProject() {
+    async saveProject() {
         const data = {
             version: '1.0',
             bpm: this.bpm,
@@ -967,6 +967,24 @@ class MusicApp {
             blocks: this.chordBlocks
         };
         const json = JSON.stringify(data, null, 2);
+
+        // Prefer the native file picker so the user can choose a folder (Chrome/Edge secure context)
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: 'music-project.json',
+                    types: [{ description: 'JSON Project', accept: { 'application/json': ['.json'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(json);
+                await writable.close();
+                return;
+            } catch (err) {
+                console.warn('showSaveFilePicker failed, falling back to download:', err);
+            }
+        }
+
+        // Fallback: trigger a download (likely goes to Downloads)
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
